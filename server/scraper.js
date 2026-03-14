@@ -58,8 +58,8 @@ async function ensureLoggedIn(page) {
 
   console.log('[scraper] Entering credentials...')
   await page.waitForSelector('#username', { timeout: 10000 })
-  await page.type('#username', email, { delay: 40 })
-  await page.type('#password', password, { delay: 40 })
+  await page.type('#username', email, { delay: 0 })
+  await page.type('#password', password, { delay: 0 })
   await page.click('[type="submit"]')
 
   // Wait for navigation away from login
@@ -121,20 +121,31 @@ export async function scrapeLinkedIn(profileUrl) {
   try {
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
 
+    await page.setRequestInterception(true)
+    page.on('request', req => {
+      const type = req.resourceType()
+      // Allow LinkedIn's media CDN so profile picture src attributes get set by their lazy-loader
+      if (type === 'image' && req.url().includes('media.licdn.com')) {
+        req.continue()
+      } else if (type === 'image' || type === 'stylesheet' || type === 'font' || type === 'media') {
+        req.abort()
+      } else {
+        req.continue()
+      }
+    })
+
     await ensureLoggedIn(page)
 
     console.log(`[scraper] Loading profile: ${profileUrl}`)
 
-    // Use 'load' — more reliable than domcontentloaded for LinkedIn profiles
-    // but with a long timeout since LinkedIn is slow
-    await page.goto(profileUrl, { waitUntil: 'load', timeout: 90000 })
+    await page.goto(profileUrl, { waitUntil: 'domcontentloaded', timeout: 30000 })
 
-    // Scroll to trigger lazy sections
-    await new Promise(r => setTimeout(r, 2000))
+    // Scroll to trigger lazy sections, waiting for key selectors instead of fixed delays
+    await page.waitForSelector('h1', { timeout: 15000 })
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2))
-    await new Promise(r => setTimeout(r, 1000))
+    await page.waitForSelector('#experience', { timeout: 8000 }).catch(() => {})
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
-    await new Promise(r => setTimeout(r, 1000))
+    await page.waitForSelector('#skills', { timeout: 8000 }).catch(() => {})
 
     const profileData = await page.evaluate(() => {
       const getText = sel => { const el = document.querySelector(sel); return el ? el.innerText.trim() : '' }
@@ -148,8 +159,8 @@ export async function scrapeLinkedIn(profileUrl) {
         experience: getAll('#experience ~ div .pvs-list__item--line-separated'),
         education:  getAll('#education ~ div .pvs-list__item--line-separated'),
         skills:     getAll('#skills ~ div .pvs-list__item--line-separated'),
-        profilePictureUrl: getAttr('img.pv-top-card-profile-picture__image', 'src') || getAttr('.presence-entity__image', 'src') || (getText('h1') ? getAttr(`img[alt="${getText('h1')}"]`, 'src') : null) || getAttr('img[alt="Profile picture"]', 'src'),
-        rawText:    document.body.innerText.slice(0, 10000),
+        profilePictureUrl: getAttr('img.pv-top-card-profile-picture__image', 'src') || getAttr('img.pv-top-card-profile-picture__image', 'data-delayed-url') || getAttr('.presence-entity__image', 'src') || getAttr('.presence-entity__image', 'data-delayed-url') || (getText('h1') ? getAttr(`img[alt="${getText('h1')}"]`, 'src') : null) || getAttr('img[alt="Profile picture"]', 'src'),
+        rawText:    document.body.innerText.slice(0, 2000),
       }
     })
 

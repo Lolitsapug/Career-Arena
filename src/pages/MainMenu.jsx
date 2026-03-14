@@ -23,7 +23,7 @@ function deckToProfile(deck) {
 
 export default function MainMenu() {
   const navigate = useNavigate()
-  const { savedDecks, player1Deck, player2Deck, isGenerating, generateError, generateDeck, selectDeck, deleteSavedDeck, clearSlot } = useDeckStore()
+  const { savedDecks, player1Deck, player2Deck, isGenerating, generateError, generateDeck, selectDeck, deleteSavedDeck, clearSlot, clearAllDecks } = useDeckStore()
   const { theme, setTheme, themes } = useTheme()
 
   const [importModal, setImportModal]   = useState(false)

@@ -6,6 +6,11 @@ function deepClone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+function isMinionDead(minion) {
+  const health = Number(minion?.health);
+  return Boolean(minion?.dead) || (Number.isFinite(health) && health <= 0);
+}
+
 function drawCards(player, n) {
   const p = deepClone(player);
   for (let i = 0; i < n; i++) {
@@ -22,7 +27,7 @@ function drawCards(player, n) {
 }
 
 function hasTaunt(board) {
-  return board.some(m => m.abilities?.includes('taunt') && !m.dead);
+  return board.some(m => m.abilities?.includes('taunt') && !isMinionDead(m));
 }
 
 function applyDamageToMinion(minion, amount) {
@@ -46,7 +51,7 @@ function applyDamageToHero(hero, amount) {
 }
 
 function removeDeadMinions(board) {
-  return board.filter(m => !m.dead);
+  return board.filter(m => !isMinionDead(m));
 }
 
 function resolveDeathrattles(state, playerIdx, deadMinions) {
@@ -73,8 +78,8 @@ function resolveDeathrattles(state, playerIdx, deadMinions) {
 function removeDeadAndResolve(state) {
   let s = deepClone(state);
   for (let pi = 0; pi < 2; pi++) {
-    const dead = s.players[pi].board.filter(m => m.dead);
-    s.players[pi].board = s.players[pi].board.filter(m => !m.dead);
+    const dead = s.players[pi].board.filter(m => isMinionDead(m));
+    s.players[pi].board = s.players[pi].board.filter(m => !isMinionDead(m));
     if (dead.length > 0) s = resolveDeathrattles(s, pi, dead);
   }
   return s;

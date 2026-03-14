@@ -341,7 +341,7 @@ body {
   overflow: hidden;
   background: var(--board-felt);
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 1fr minmax(auto, 400px) 1fr;
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     "left opponent  endturn"
@@ -383,13 +383,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.4rem 0.75rem;
+  padding: 0.15rem 0.75rem;
   position: relative;
 }
 .opponent-area {
   grid-area: opponent;
   background: linear-gradient(180deg, rgba(60,10,10,0.5) 0%, transparent 100%);
   box-shadow: inset 0 -6px 18px rgba(0,0,0,0.4);
+  justify-content: flex-end;
+  padding-bottom: 0.4rem;
 }
 .current-area {
   grid-area: current;
@@ -589,34 +591,47 @@ body {
 /* ── Hand ────────────────────────────────────────────────────────────────── */
 .hand-zone {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: -8px;
   width: 100%;
   padding: 0.3rem 0.5rem;
   min-height: 60px;
 }
+.opponent-hand-top {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+}
+
 .opponent-hand {
   gap: 4px;
+  align-items: flex-start;
+  margin-top: -118px;
 }
 .player-hand {
   gap: 6px;
-  min-height: 110px;
+  min-height: 152px;
   align-items: flex-end;
+  padding-bottom: 0;
 }
 .player-hand .hand-card {
-  margin-bottom: 0;
-  transition: transform 0.15s;
+  margin-bottom: -32px;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
 }
 .player-hand .hand-card:hover {
-  transform: translateY(-20px) scale(1.06);
+  transform: translateY(-54px) scale(1.18);
   z-index: 10;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 20px rgba(201,162,39,0.3);
 }
 
 /* ── Hand Card ───────────────────────────────────────────────────────────── */
 .hand-card {
-  width: 88px;
-  height: 148px;
+  width: 114px;
+  height: 180px;
   border-radius: 8px;
   background: var(--card-bg);
   border: 2px solid var(--card-border);
@@ -633,8 +648,8 @@ body {
   overflow: hidden;
 }
 .hand-card--back {
-  width: 88px;
-  height: 148px;
+  width: 114px;
+  height: 180px;
   background: linear-gradient(135deg, #1e1b4b, #312e81);
   border: 2px solid #4c1d95;
   cursor: default;
@@ -794,8 +809,8 @@ body {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 150px;
-  padding: 10px 1rem;
+  min-height: 130px;
+  padding: 2px 1rem;
   position: relative;
 }
 /* Opponent side — subtle red tint on the felt surface */
@@ -880,8 +895,8 @@ body {
 
 /* ── Board Minion ─────────────────────────────────────────────────────────── */
 .board-minion {
-  width: 100px;
-  height: 140px;
+  width: 120px;
+  height: 160px;
   border-radius: 10px;
   background: linear-gradient(180deg, #1e3a5f, #0f1f33);
   border: 2px solid #2563eb;

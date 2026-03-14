@@ -852,6 +852,12 @@ export default function GameBoard() {
           <button className="forfeit-btn" onClick={() => setForfeitConfirm(true)}>🏳 Forfeit</button>
         )}
       </div>
+      <div className="opponent-hand-top">
+        <div className="hand-zone opponent-hand">
+          {oppPlayer.hand.map((_, i) => <HandCard key={i} card={null} isOpponent />)}
+        </div>
+      </div>
+
       <div className="player-area opponent-area">
         <BgParticles />
         <div className="hero-zone">
@@ -866,9 +872,6 @@ export default function GameBoard() {
             isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
             onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
           <div className="hero-side-info hero-side-info--right" />
-        </div>
-        <div className="hand-zone opponent-hand">
-          {oppPlayer.hand.map((_, i) => <HandCard key={i} card={null} isOpponent />)}
         </div>
       </div>
 

@@ -1,0 +1,179 @@
+.card {
+  position: relative;
+  border-radius: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  user-select: none;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Rarity glow on border */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  border: 1px solid var(--rarity-color);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 16px var(--border-glow);
+  z-index: 10;
+}
+
+/* Sizes */
+.hand  { width: 80px;  height: 115px; }
+.board { width: 90px;  height: 130px; }
+.viewer { width: 160px; height: 230px; }
+
+/* Selected */
+.selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary), 0 0 20px var(--border-glow);
+  transform: translateY(-10px) scale(1.06);
+}
+
+/* Attacker (orange glow) */
+.attacker {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px var(--accent-gold), 0 0 20px rgba(245, 158, 11, 0.4);
+  animation: attackPulse 1s ease infinite alternate;
+}
+
+@keyframes attackPulse {
+  from { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
+  to   { box-shadow: 0 0 24px rgba(245, 158, 11, 0.7); }
+}
+
+/* Cost crystal */
+.cost {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  background: var(--accent-gold);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--bg-deep);
+  z-index: 2;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+.viewer .cost { width: 28px; height: 28px; font-size: 0.85rem; top: 6px; left: 6px; }
+
+/* Art area */
+.art {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  margin: 0 4px;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+.roleIcon { font-size: 1.4rem; line-height: 1; }
+.viewer .roleIcon { font-size: 2.5rem; }
+
+/* Name area */
+.nameArea {
+  padding: 3px 4px 0;
+  text-align: center;
+}
+
+.cardName {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 0.48rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer .cardName { font-size: 0.75rem; }
+
+.cardSub {
+  font-size: 0.42rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer .cardSub { font-size: 0.65rem; }
+
+/* Ability text */
+.ability {
+  font-size: 0.38rem;
+  color: var(--accent-gold);
+  font-style: italic;
+  padding: 2px 4px;
+  text-align: center;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.viewer .ability { font-size: 0.6rem; padding: 4px 8px; }
+
+/* Stats bar */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 4px 4px;
+}
+
+.attack {
+  background: var(--accent-gold);
+  color: var(--bg-deep);
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.viewer .attack { width: 24px; height: 24px; font-size: 0.85rem; }
+
+.hpBadge {
+  background: var(--accent-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background 300ms;
+}
+
+.viewer .hpBadge { width: 24px; height: 24px; font-size: 0.85rem; }
+
+.lowHp {
+  animation: hpPulse 0.8s ease infinite alternate;
+}
+
+@keyframes hpPulse {
+  from { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+  to   { box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+}

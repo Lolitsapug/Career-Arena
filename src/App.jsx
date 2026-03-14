@@ -1,9 +1,18 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import MainMenu from './pages/MainMenu'
+import GameBoard from './pages/GameBoard'
+import DeckViewer from './pages/DeckViewer'
+import Leaderboard from './pages/Leaderboard'
+
 export default function App() {
   return (
-    <main className="app">
-      <h1>Career Arena</h1>
-      <p>AI-generated LinkedIn deck game starter is ready.</p>
-      <button type="button">Start building</button>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/"            element={<MainMenu />} />
+        <Route path="/game"        element={<GameBoard />} />
+        <Route path="/deck"        element={<DeckViewer />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+      </Routes>
+    </BrowserRouter>
   )
 }

@@ -1,0 +1,10 @@
+.avatar {
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--bg-deep);
+  flex-shrink: 0;
+  user-select: none;
+}

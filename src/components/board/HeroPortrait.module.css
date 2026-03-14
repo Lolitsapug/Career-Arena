@@ -1,0 +1,90 @@
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  transition: border-color 200ms, box-shadow 200ms;
+  min-width: 0;
+}
+
+.active {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px var(--border-glow);
+}
+
+.right { flex-direction: row-reverse; }
+.right .info { align-items: flex-end; }
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.hpRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hpNum {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-danger);
+  white-space: nowrap;
+  line-height: 1;
+  text-shadow: 0 0 6px rgba(239,68,68,0.4);
+  min-width: 42px;
+}
+
+.lowHp {
+  animation: hpPulse 0.8s ease infinite alternate;
+  color: #ff4444;
+}
+
+@keyframes hpPulse {
+  from { text-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+  to   { text-shadow: 0 0 16px rgba(239, 68, 68, 1); }
+}
+
+/* HP bar */
+.hpBarTrack {
+  width: 70px;
+  height: 6px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.hpBarFill {
+  height: 100%;
+  background: var(--accent-danger);
+  border-radius: 3px;
+  transition: width 400ms ease, background 400ms ease;
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+.hpBarLow {
+  background: #ff4444;
+  animation: barPulse 0.8s ease infinite alternate;
+}
+
+@keyframes barPulse {
+  from { box-shadow: 0 0 4px rgba(239,68,68,0.5); }
+  to   { box-shadow: 0 0 12px rgba(239,68,68,0.9); }
+}

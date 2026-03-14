@@ -1,0 +1,65 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.icon { font-size: 1rem; line-height: 1; }
+
+.count {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(125, 139, 255, 0.6);
+}
+
+.max {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.crystals {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.crystal {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  transition: background 250ms ease, box-shadow 250ms ease, transform 200ms ease;
+  animation: fillIn 300ms ease calc(var(--i) * 50ms) both;
+}
+
+@keyframes fillIn {
+  from { transform: rotate(45deg) scale(0.4); opacity: 0; }
+  to   { transform: rotate(45deg) scale(1);   opacity: 1; }
+}
+
+.full {
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(125, 139, 255, 0.8), 0 0 2px rgba(125, 139, 255, 0.5) inset;
+}
+
+.spent {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+  opacity: 0.5;
+}

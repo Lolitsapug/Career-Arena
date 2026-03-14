@@ -1,0 +1,58 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 150ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-width: 380px;
+  max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: slideUp 200ms ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: color 150ms;
+}
+
+.close:hover { color: var(--text-primary); }
+
+.body { color: var(--text-muted); }

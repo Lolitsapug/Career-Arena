@@ -154,6 +154,49 @@
   --theme-toggle-active-text: #1b1b1b;
 }
 
+:root[data-theme='linkedin'] {
+  color-scheme: light;
+  --font-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Inter', -apple-system, sans-serif;
+  --board-bg:      #f3f2ef;
+  --board-felt:    #f3f2ef;
+  --gold:          #0a66c2;
+  --gold-light:    #378fe9;
+  --green-glow:    #f3f2ef;
+  --red-glow:      #f3f2ef;
+  --blue-glow:     #0a66c2;
+  --purple-glow:   #7c3aed;
+  --card-bg:       #ffffff;
+  --card-border:   #0a66c2;
+  --minion-bg:     #dce6f1;
+  --mana-full:     #0a66c2;
+  --mana-empty:    #c0d2e8;
+  --hero-bg:       linear-gradient(135deg, #e1ecf7, #cddcef);
+  --shadow-gold:   0 0 12px rgba(10,102,194,0.35);
+  --text-light:    #191919;
+  --text-dim:      #666666;
+  --bg-deep:       #f3f2ef;
+  --bg-surface:    rgba(255,255,255,0.92);
+  --bg-raised:     #c8d8ea;
+  --border-subtle: rgba(10,102,194,0.35);
+  --text-primary:  #191919;
+  --text-muted:    #666666;
+  --accent-primary:#0a66c2;
+  --accent-secondary:#378fe9;
+  --accent-gold:   #0a66c2;
+  --accent-success:#057642;
+  --accent-danger: #cc1016;
+  --title-glow: 0 0 36px rgba(10,102,194,0.25);
+  --main-menu-left-glow: radial-gradient(ellipse at 40% 60%, rgba(10,102,194,0.08) 0%, transparent 70%);
+  --badge-primary-bg: rgba(10,102,194,0.15);
+  --badge-secondary-bg: rgba(55,143,233,0.12);
+  --button-secondary-hover-bg: rgba(10,102,194,0.1);
+  --theme-toggle-highlight: rgba(255,255,255,0.5);
+  --theme-toggle-active-bg: rgba(10,102,194,0.15);
+  --theme-toggle-active-border: rgba(10,102,194,0.5);
+  --theme-toggle-active-text: #0a66c2;
+}
+
 :root[data-theme='light'] {
   color-scheme: light;
   --board-bg:      #e8d5b0;
@@ -2483,6 +2526,102 @@ body {
     --hand-hover-y: -49px;
     --hand-hover-s:  1.16;
   }
+}
+
+/* ── LinkedIn theme overrides ─────────────────────────────────────────────── */
+[data-theme='linkedin'] .board-area {
+  background: #f3f2ef;
+  border-top: 2px solid rgba(10,102,194,0.35);
+  border-bottom: 2px solid rgba(10,102,194,0.35);
+  box-shadow:
+    inset 0 6px 20px rgba(0,0,0,0.08),
+    inset 0 -6px 20px rgba(0,0,0,0.08);
+}
+[data-theme='linkedin'] .board-hero-cup {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(220,230,241,0.6) 100%),
+    url('./images/linkedin-texture.svg') center/300px auto no-repeat;
+  border-color: rgba(10,102,194,0.6);
+  box-shadow:
+    0 0 0 2px rgba(10,102,194,0.3),
+    0 4px 16px rgba(0,0,0,0.15),
+    inset 0 2px 8px rgba(0,0,0,0.08);
+}
+[data-theme='linkedin'] .opponent-row {
+  background: none;
+}
+[data-theme='linkedin'] .player-row {
+  background: none;
+}
+[data-theme='linkedin'] .board-side {
+  background: #e8f0fb;
+  border-color: rgba(10,102,194,0.25);
+}
+[data-theme='linkedin'] .board-side::before {
+  display: none;
+}
+[data-theme='linkedin'] .opponent-area {
+  background: none;
+  box-shadow: none;
+}
+[data-theme='linkedin'] .current-area {
+  background: none;
+  box-shadow: none;
+}
+[data-theme='linkedin'] .end-turn-zone {
+  background: linear-gradient(180deg, #e1ecf7, #cddcef);
+  border-color: rgba(10,102,194,0.25);
+}
+[data-theme='linkedin'] .end-turn-btn {
+  background: linear-gradient(180deg, #0a66c2, #004182);
+  border-color: #378fe9;
+  color: #ffffff;
+}
+[data-theme='linkedin'] .end-turn-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #378fe9, #0a66c2);
+}
+[data-theme='linkedin'] .hand-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f2ef 100%);
+  border-color: #0a66c2;
+}
+[data-theme='linkedin'] .hand-card .card-name {
+  color: #191919;
+}
+[data-theme='linkedin'] .board-minion {
+  background: linear-gradient(180deg, #e1ecf7, #cddcef);
+  border-color: #0a66c2;
+}
+[data-theme='linkedin'] .board-minion .minion-name {
+  color: #191919;
+}
+[data-theme='linkedin'] .mana-pip.filled {
+  background: #0a66c2;
+  border-color: #378fe9;
+}
+[data-theme='linkedin'] .mana-pip.empty {
+  background: #c0d2e8;
+  border-color: #a0b8d0;
+}
+[data-theme='linkedin'] .player-name-label {
+  background: rgba(10,102,194,0.85);
+  border-color: rgba(55,143,233,0.4);
+  color: #ffffff;
+}
+[data-theme='linkedin'] .sidebar-turn-label {
+  color: #0a66c2;
+}
+[data-theme='linkedin'] .forfeit-btn {
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(10,102,194,0.3);
+  color: #666666;
+}
+[data-theme='linkedin'] .forfeit-btn:hover {
+  background: rgba(204,16,22,0.1);
+  border-color: #cc1016;
+  color: #cc1016;
+}
+[data-theme='linkedin'] .setup-screen {
+  background: radial-gradient(ellipse at center, #f3f2ef 0%, #e8e4df 100%);
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */

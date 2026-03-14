@@ -320,15 +320,12 @@ export function playCard(state, cardIndex) {
   if (p.mana.current < card.cost) return { state: s, needsTarget: false };
   if (card.type === 'MINION' && p.board.length >= 7) return { state: s, needsTarget: false };
 
-  // Deduct mana
-  s.players[pi].mana.current -= card.cost;
-
-  // Remove from hand and add to discard pile
-  s.players[pi].hand.splice(cardIndex, 1);
-  if (!s.players[pi].discard) s.players[pi].discard = [];
-  s.players[pi].discard.push(card);
-
   if (card.type === 'MINION') {
+    // Deduct mana and remove from hand immediately for minions
+    s.players[pi].mana.current -= card.cost;
+    s.players[pi].hand.splice(cardIndex, 1);
+    if (!s.players[pi].discard) s.players[pi].discard = [];
+    s.players[pi].discard.push(card);
     // Place on board
     const hasCharge  = card.abilities?.includes('charge');
     const hasRush    = card.abilities?.includes('rush');
@@ -347,15 +344,20 @@ export function playCard(state, cardIndex) {
     s = resolveBattlecry(s, pi, card);
     s.log = [`${p.hero.name} played ${card.name}`];
   } else {
-    // Spell
+    // Spell — check if it needs a target before committing mana/hand removal
     const needsTarget = (card.abilities || []).some(a =>
       ['spell_damage_3', 'spell_damage_2', 'spell_buff_target', 'spell_buff_target_3', 'spell_freeze'].includes(a)
     );
     if (needsTarget) {
+      // Don't remove from hand or deduct mana yet — wait for target confirmation
       s.pendingSpell = { cardIndex, card };
-      // Card already removed from hand; if cancelled we won't re-add for simplicity
       return { state: s, needsTarget: true };
     } else {
+      // No target needed — commit immediately
+      s.players[pi].mana.current -= card.cost;
+      s.players[pi].hand.splice(cardIndex, 1);
+      if (!s.players[pi].discard) s.players[pi].discard = [];
+      s.players[pi].discard.push(card);
       s = resolveSpell(s, pi, card, null, null);
       s.log = [`${p.hero.name} cast ${card.name}`];
     }
@@ -369,9 +371,14 @@ export function playCard(state, cardIndex) {
 export function resolveSpellTarget(state, targetType, targetIdx) {
   let s = deepClone(state);
   if (!s.pendingSpell) return s;
-  const { card } = s.pendingSpell;
+  const { cardIndex, card } = s.pendingSpell;
   const pi = s.currentPlayer;
   s.pendingSpell = null;
+  // Now commit: deduct mana and remove card from hand
+  s.players[pi].mana.current -= card.cost;
+  s.players[pi].hand.splice(cardIndex, 1);
+  if (!s.players[pi].discard) s.players[pi].discard = [];
+  s.players[pi].discard.push(card);
   s = resolveSpell(s, pi, card, targetType, targetIdx);
   s.log = [`${s.players[pi].hero.name} cast ${card.name}`];
   s = checkWin(s);

@@ -54,11 +54,11 @@
   --card-back-h:   180px;
   --minion-w:      120px;
   --minion-h:      160px;
-  --minion-row-h:  130px;
+  --minion-row-h:  175px;
   --hero-size:     110px;
-  --sidebar-w:     80px;
-  --endturn-w:     130px;
-  --endturn-btn-w: 110px;
+  --sidebar-w:     200px;
+  --endturn-w:     200px;
+  --endturn-btn-w: 172px;
   --hand-peek:    -32px;
   --hand-hover-y: -54px;
   --hand-hover-s:  1.18;
@@ -357,7 +357,7 @@ body {
   overflow: hidden;
   background: var(--board-felt);
   display: grid;
-  grid-template-rows: 1fr minmax(auto, 450px) 1fr;
+  grid-template-rows: 1.2fr minmax(auto, 520px) 1fr;
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     "left opponent  endturn"
@@ -379,6 +379,35 @@ body {
   border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
   box-shadow: inset -8px 0 20px rgba(0,0,0,0.6), 4px 0 12px rgba(0,0,0,0.5);
 }
+/* Turn counter — centred in the left bar */
+.sidebar-turn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.sidebar-turn-label {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.14em;
+  text-shadow: 0 0 12px rgba(201,162,39,0.6), 0 2px 4px rgba(0,0,0,0.8);
+}
+.sidebar-turn-player {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
 /* Wood grain accent on the border panels */
 .board-side::before {
   content: '';
@@ -528,17 +557,33 @@ body {
   font-weight: 700;
   color: #d1d5db;
 }
-.hero-name-tag {
+.hero-name-tag { display: none; }
+
+/* Player name labels inside the left sidebar */
+.player-name-label {
   position: absolute;
-  top: -22px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.75rem;
   font-family: var(--font-display);
-  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e8e0d0;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  letter-spacing: 0.05em;
   white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+  pointer-events: none;
+  text-align: center;
+  max-width: calc(var(--sidebar-w) - 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(10, 5, 2, 0.65);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  backdrop-filter: blur(4px);
 }
+.player-name-label--opponent { top: 18px; }
+.player-name-label--player   { bottom: 18px; }
 
 /* ── Deck Counter ─────────────────────────────────────────────────────────── */
 .deck-counter {
@@ -638,12 +683,12 @@ body {
 }
 .player-hand .hand-card {
   margin-bottom: var(--hand-peek);
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
 .player-hand .hand-card:hover {
   transform: translateY(var(--hand-hover-y)) scale(var(--hand-hover-s));
   z-index: 10;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 20px rgba(201,162,39,0.3);
 }
 
 /* ── Hand Card ───────────────────────────────────────────────────────────── */
@@ -660,7 +705,7 @@ body {
   align-items: center;
   padding: 4px 4px 2px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.15s;
   flex-shrink: 0;
   user-select: none;
   overflow: hidden;
@@ -829,6 +874,48 @@ body {
 }
 
 /* ── Board Area ───────────────────────────────────────────────────────────── */
+/* Spacer that reserves the hero portrait width so side info stays aligned */
+.hero-zone-spacer {
+  width: var(--hero-size);
+  flex-shrink: 0;
+}
+
+/* ── Board hero cups ──────────────────────────────────────────────────────── */
+/* Circular wood-textured platform that the hero portrait sits inside,
+   half-overlapping the board edge */
+.board-hero-cup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--hero-size) + 28px);
+  height: calc(var(--hero-size) + 28px);
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(20,10,2,0.55) 0%, rgba(35,15,4,0.4) 100%),
+    url('./images/woodtexture.jpg') center/300px auto no-repeat;
+  border: 3px solid rgba(120,70,20,0.95);
+  box-shadow:
+    0 0 0 2px rgba(201,162,39,0.4),
+    0 4px 16px rgba(0,0,0,0.7),
+    inset 0 2px 8px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+}
+.board-hero-cup--top {
+  top: calc(-1 * (var(--hero-size) / 2 + 14px));
+}
+.board-hero-cup--bottom {
+  bottom: calc(-1 * (var(--hero-size) / 2 + 14px));
+}
+/* Strip the portrait's own border/bg — the cup provides it */
+.board-hero-cup .hero-portrait {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
 .board-area {
   grid-area: board;
   display: flex;
@@ -837,6 +924,7 @@ body {
   justify-content: center;
   position: relative;
   gap: 0;
+  overflow: visible;
   background:
     /* Theme colour overlay — warm dark amber to tie into the gold/brown UI */
     linear-gradient(180deg, rgba(20,10,2,0.62) 0%, rgba(35,15,4,0.5) 50%, rgba(20,10,2,0.62) 100%),
@@ -861,6 +949,10 @@ body {
   padding: 2px 1rem;
   position: relative;
 }
+/* Give minion rows breathing room so the hero cups don't overlap them */
+.opponent-row { padding-top: calc(var(--hero-size) / 2 + 20px); }
+.player-row   { padding-bottom: calc(var(--hero-size) / 2 + 20px); }
+
 /* Opponent side — subtle red tint on the felt surface */
 .opponent-row {
   background:
@@ -979,7 +1071,7 @@ body {
   pointer-events: none;
 }
 /* Ensure card content sits above the shield fill */
-.board-minion > *:not(.taunt-shield):not(.divine-aura) {
+.board-minion > *:not(.taunt-shield):not(.divine-aura):not(.stealth-icon) {
   position: relative;
   z-index: 1;
 }
@@ -1014,6 +1106,7 @@ body {
   box-shadow: 0 0 16px rgba(239,68,68,0.7), 0 0 4px rgba(239,68,68,0.9);
   cursor: crosshair;
   animation: pulse-red 0.8s infinite;
+  will-change: opacity;
 }
 .board-minion.exhausted {
   filter: brightness(0.6) saturate(0.5);
@@ -1088,22 +1181,59 @@ body {
   pointer-events: none;
   z-index: 3;
   animation: divine-shimmer 1.5s ease-in-out infinite alternate;
+  will-change: box-shadow;
 }
-/* Stealth — dark smoky overlay on the card */
+/* Stealth — fog overlay */
 .board-minion.is-stealthed {
-  filter: brightness(0.55) saturate(0.4);
-  border-color: #6b21a8;
-  box-shadow: 0 0 14px rgba(107,33,168,0.7), 0 0 28px rgba(107,33,168,0.3), 0 4px 12px rgba(0,0,0,0.6);
+  border-color: #7c3aed;
+  box-shadow: 0 0 16px rgba(124,58,237,0.6), 0 0 32px rgba(124,58,237,0.25), 0 4px 12px rgba(0,0,0,0.7);
+  overflow: visible;
 }
-.board-minion.is-stealthed::after {
-  content: '🌑';
+/* Base fog layer — slow rolling mist */
+.board-minion.is-stealthed::before {
+  content: '';
   position: absolute;
-  top: 2px;
-  right: 3px;
-  font-size: 0.6rem;
+  inset: -6px;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse 70% 40% at 30% 60%, rgba(124,58,237,0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 70% 30%, rgba(79,20,168,0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 30% at 50% 80%, rgba(45,12,100,0.5) 0%, transparent 60%);
+  animation: stealth-fog-drift 4s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 3;
+  will-change: transform, opacity;
+}
+/* Second fog layer — faster counter-drift for depth */
+.board-minion.is-stealthed::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse 50% 60% at 60% 40%, rgba(167,139,250,0.25) 0%, transparent 65%),
+    radial-gradient(ellipse 65% 35% at 20% 70%, rgba(109,40,217,0.3) 0%, transparent 60%);
+  animation: stealth-fog-drift 2.8s ease-in-out infinite alternate-reverse;
+  pointer-events: none;
+  z-index: 4;
+  will-change: transform, opacity;
+}
+@keyframes stealth-fog-drift {
+  0%   { transform: translate(-4px, -3px) scale(1.02); opacity: 0.85; }
+  33%  { transform: translate(3px, -5px)  scale(0.98); opacity: 1; }
+  66%  { transform: translate(-2px, 4px)  scale(1.03); opacity: 0.9; }
+  100% { transform: translate(5px, 2px)   scale(0.97); opacity: 1; }
+}
+/* Eye icon to show it's stealthed */
+.stealth-icon {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.65rem;
   opacity: 0.9;
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
+  filter: drop-shadow(0 0 3px rgba(167,139,250,0.9));
 }
 /* Silenced — greyed out with crossed-out badge */
 .board-minion.is-silenced {
@@ -1127,9 +1257,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   padding: 0.75rem;
   width: var(--endturn-w);
+  overflow: visible;
   background: linear-gradient(180deg, #0e0704 0%, #1a0d05 40%, #1a0d05 60%, #0e0704 100%);
   border-left: 3px solid;
   border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
@@ -1153,25 +1284,25 @@ body {
 }
 
 .end-turn-btn {
-  padding: 0.65rem 0;
-  width: var(--endturn-btn-w);
+  padding: 1rem 0;
+  width: calc(var(--endturn-btn-w) + 16px);
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   font-weight: 700;
   background: linear-gradient(180deg, #16a34a, #15803d 50%, #14532d);
   color: #dcfce7;
   border: 2px solid #22c55e;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   letter-spacing: 0.08em;
-  box-shadow: 0 0 16px rgba(34,197,94,0.4), 0 4px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(134,239,172,0.3);
+  box-shadow: 0 0 20px rgba(34,197,94,0.5), 0 6px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(134,239,172,0.3);
   transition: all 0.2s;
   animation: end-turn-pulse 2s ease-in-out infinite;
 }
 .end-turn-btn:hover {
   background: linear-gradient(180deg, #22c55e, #16a34a 50%, #15803d);
-  box-shadow: 0 0 28px rgba(34,197,94,0.7), 0 6px 12px rgba(0,0,0,0.5);
-  transform: scale(1.04);
+  box-shadow: 0 0 36px rgba(34,197,94,0.8), 0 8px 20px rgba(0,0,0,0.6);
+  transform: scale(1.06);
 }
 .end-turn-btn.disabled {
   background: linear-gradient(180deg, #4b5563, #374151);
@@ -1184,7 +1315,7 @@ body {
 
 .cancel-btn {
   padding: 0.4rem 0;
-  width: 90px;
+  width: var(--endturn-btn-w);
   font-size: 0.7rem;
   font-family: var(--font-display);
   font-weight: 600;
@@ -1221,22 +1352,6 @@ body {
   border-color: rgba(201,162,39,0.4);
 }
 
-.turn-indicator {
-  font-size: 0.7rem;
-  color: var(--gold);
-  font-family: var(--font-display);
-  letter-spacing: 0.08em;
-}
-.active-player-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-align: center;
-  font-family: var(--font-display);
-  max-width: 110px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 /* ── Action Hints ─────────────────────────────────────────────────────────── */
 .action-hint {
@@ -1335,28 +1450,30 @@ body {
 
 /* ── Forfeit Button ───────────────────────────────────────────────────────── */
 .forfeit-zone {
-  position: absolute;
-  top: 14px;
-  left: 14px;
+  position: fixed;
+  top: 16px;
+  right: 16px;
   z-index: 50;
 }
 .forfeit-btn {
-  background: rgba(30,12,6,0.85);
-  border: 1px solid rgba(239,68,68,0.4);
-  color: rgba(239,68,68,0.7);
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-family: var(--font-base);
+  background: rgba(30,12,6,0.9);
+  border: 2px solid rgba(239,68,68,0.5);
+  color: rgba(239,68,68,0.85);
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
   cursor: pointer;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 .forfeit-btn:hover {
-  background: rgba(239,68,68,0.15);
-  border-color: rgba(239,68,68,0.7);
+  background: rgba(239,68,68,0.18);
+  border-color: #ef4444;
   color: #ef4444;
-  box-shadow: 0 0 10px rgba(239,68,68,0.3);
+  box-shadow: 0 0 18px rgba(239,68,68,0.4), 0 4px 12px rgba(0,0,0,0.5);
 }
 .forfeit-confirm {
   display: flex;
@@ -1598,8 +1715,8 @@ body {
   50% { box-shadow: 0 0 28px rgba(34,197,94,0.7), 0 4px 8px rgba(0,0,0,0.4); }
 }
 @keyframes pulse-red {
-  0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.5); }
-  50% { box-shadow: 0 0 22px rgba(239,68,68,0.9), 0 0 4px rgba(239,68,68,1); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
 }
 @keyframes taunt-glow {
   from { box-shadow: 0 0 6px rgba(251,191,36,0.4); }
@@ -2291,11 +2408,11 @@ body {
   --card-back-h:   144px;
   --minion-w:      96px;
   --minion-h:      128px;
-  --minion-row-h:  104px;
+  --minion-row-h:  140px;
   --hero-size:     88px;
-  --sidebar-w:     64px;
-  --endturn-w:     108px;
-  --endturn-btn-w: 90px;
+  --sidebar-w:     165px;
+  --endturn-w:     165px;
+  --endturn-btn-w: 142px;
   --hand-peek:    -26px;
   --hand-hover-y: -44px;
   --hand-hover-s:  1.14;
@@ -2309,11 +2426,11 @@ body {
   --card-back-h:   162px;
   --minion-w:      108px;
   --minion-h:      144px;
-  --minion-row-h:  116px;
+  --minion-row-h:  155px;
   --hero-size:     100px;
-  --sidebar-w:     72px;
-  --endturn-w:     120px;
-  --endturn-btn-w: 100px;
+  --sidebar-w:     182px;
+  --endturn-w:     182px;
+  --endturn-btn-w: 156px;
   --hand-peek:    -29px;
   --hand-hover-y: -49px;
   --hand-hover-s:  1.16;
@@ -2328,11 +2445,11 @@ body {
     --card-back-h:   144px;
     --minion-w:      96px;
     --minion-h:      128px;
-    --minion-row-h:  104px;
+    --minion-row-h:  140px;
     --hero-size:     88px;
-    --sidebar-w:     64px;
-    --endturn-w:     108px;
-    --endturn-btn-w: 90px;
+    --sidebar-w:     165px;
+    --endturn-w:     165px;
+    --endturn-btn-w: 142px;
     --hand-peek:    -26px;
     --hand-hover-y: -44px;
     --hand-hover-s:  1.14;
@@ -2346,11 +2463,11 @@ body {
     --card-back-h:   162px;
     --minion-w:      108px;
     --minion-h:      144px;
-    --minion-row-h:  116px;
+    --minion-row-h:  155px;
     --hero-size:     100px;
-    --sidebar-w:     72px;
-    --endturn-w:     120px;
-    --endturn-btn-w: 100px;
+    --sidebar-w:     182px;
+    --endturn-w:     182px;
+    --endturn-btn-w: 156px;
     --hand-peek:    -29px;
     --hand-hover-y: -49px;
     --hand-hover-s:  1.16;

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef, memo } from 'react';
 import { useTheme } from '../theme.jsx';
 import BgParticles from '../components/BgParticles';
 import {
@@ -270,7 +270,7 @@ function CardInspectModal({ card, onClose }) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function ManaBar({ mana }) {
+const ManaBar = memo(function ManaBar({ mana }) {
   return (
     <div className="mana-bar">
       {Array.from({ length: 10 }, (_, i) => (
@@ -279,18 +279,18 @@ function ManaBar({ mana }) {
       <span className="mana-text">{mana.current}/{mana.max}</span>
     </div>
   );
-}
+});
 
-function DeckCounter({ count, isPlayer }) {
+const DeckCounter = memo(function DeckCounter({ count, isPlayer }) {
   return (
     <div className="deck-counter" data-deck={isPlayer ? 'player' : 'opponent'}>
       <div className="deck-icon">🂠</div>
       <span>{count}</span>
     </div>
   );
-}
+});
 
-function Hero({ hero, playerIdx, isOpponent, isValidTarget, isTauntBlocked, onClick, isCurrentPlayer, isFlashing }) {
+const Hero = memo(function Hero({ hero, playerIdx, isOpponent, isValidTarget, isTauntBlocked, onClick, isCurrentPlayer, isFlashing }) {
   return (
     <div
       data-hero-idx={playerIdx}
@@ -310,12 +310,11 @@ function Hero({ hero, playerIdx, isOpponent, isValidTarget, isTauntBlocked, onCl
         {hero.armor > 0 && <span className="hero-armor">🛡{hero.armor}</span>}
         <span>{hero.health}</span>
       </div>
-      <div className="hero-name-tag">{hero.name.split(' ')[0]}</div>
     </div>
   );
-}
+});
 
-function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect }) {
+const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect }) {
   if (isOpponent) return <div className="hand-card hand-card--back" />;
   const abilities = (card.abilities || []).filter(a => ABILITY_INFO[a]);
   // For old-format cards with no abilities array, show description as a generic row
@@ -380,9 +379,9 @@ function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect })
       )}
     </div>
   );
-}
+});
 
-function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed }) {
+const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
   return (
     <div
@@ -399,11 +398,12 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
         ${isTakingHit      ? 'taking-hit'         : ''}
         ${isNewlyPlayed    ? 'just-summoned'      : ''}
       `}
-      onClick={onClick}
+      onClick={() => onClick(playerIdx, boardIdx)}
       onContextMenu={e => { e.preventDefault(); onInspect(minion); }}
     >
       {minion.abilities?.includes('taunt') && <div className="taunt-shield" />}
       {minion.hasDivineShield && <div className="divine-aura" />}
+      {minion.stealthed && <div className="stealth-icon">👁</div>}
       <div className="minion-art">{getArt(minion)}</div>
       <div className="minion-name">{minion.name}</div>
       {abilities.length > 0 && (
@@ -423,7 +423,7 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
       {!canAttack && <div className="exhausted-overlay" />}
     </div>
   );
-}
+});
 
 function TransitionScreen({ nextPlayerName, onReady }) {
   return (
@@ -867,24 +867,33 @@ export default function GameBoard() {
   const handleReady       = useCallback(() => setState(beginNewTurn(state)), [state]);
   const handleCancelSpell = useCallback(() => setState(s => ({ ...s, pendingSpell: null })), []);
 
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; });
   useEffect(() => {
     function onKeyDown(e) {
       if (e.code !== 'Space' || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
       e.preventDefault();
-      if (state.phase === 'play' && !state.pendingSpell) setState(endTurn(state));
-      else if (state.phase === 'transition') setState(beginNewTurn(state));
+      const s = stateRef.current;
+      if (s.phase === 'play' && !s.pendingSpell) setState(endTurn(s));
+      else if (s.phase === 'transition') setState(beginNewTurn(s));
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state]);
+  }, []); // registers once, reads latest state via ref
 
   if (state.phase === 'gameover')   return <GameOverScreen winner={state.players[state.winner]} loser={state.players[1 - state.winner]} forfeit={wasForfeit} onRestart={() => navigate('/')} />;
   if (state.phase === 'transition') return <TransitionScreen nextPlayerName={state.players[state.currentPlayer].hero.name} onReady={handleReady} />;
 
   return (
     <div className="game-board">
-      <div className="board-side board-side--left" />
-      {/* Forfeit button — top left */}
+      <div className="board-side board-side--left">
+        <div className="player-name-label player-name-label--opponent">{oppPlayer.hero.name}</div>
+        <div className="sidebar-turn">
+          <span className="sidebar-turn-label">TURN {state.turn}</span>
+        </div>
+        <div className="player-name-label player-name-label--player">{curPlayer.hero.name}</div>
+      </div>
+      {/* Forfeit button — top right */}
       <div className="forfeit-zone">
         {forfeitConfirm ? (
           <div className="forfeit-confirm">
@@ -899,6 +908,7 @@ export default function GameBoard() {
           <button className="forfeit-btn" onClick={() => setForfeitConfirm(true)}>🏳 Forfeit</button>
         )}
       </div>
+
       <div className="opponent-hand-top">
         <div className="hand-zone opponent-hand">
           {oppPlayer.hand.map((_, i) => <HandCard key={i} card={null} isOpponent />)}
@@ -915,19 +925,24 @@ export default function GameBoard() {
               <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
             </div>
           </div>
-          <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
-            isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
-            onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
+          <div className="hero-zone-spacer" />
           <div className="hero-side-info hero-side-info--right" />
         </div>
       </div>
 
       <div className="board-area">
+        {/* Opponent hero — sits in a wood circle at the top edge of the board */}
+        <div className="board-hero-cup board-hero-cup--top">
+          <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
+            isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
+            onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
+        </div>
+
         <div className="minion-row opponent-row">
           {oppPlayer.board.map((minion, i) => (
-            <BoardMinionCard key={minion.id} minion={minion} isSelected={false}
+            <BoardMinionCard key={minion.id} minion={minion} playerIdx={opp} boardIdx={i} isSelected={false}
               isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i)) || (!!state.pendingBattlecryTarget && state.pendingBattlecryTarget.type === 'silence')}
-              canAttack={false} onClick={() => handleSelectMinion(opp, i)} onInspect={setInspectedCard}
+              canAttack={false} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
           ))}
           {oppPlayer.board.length === 0 && <div className="empty-board-hint opp-hint">Opponent's side</div>}
@@ -941,13 +956,19 @@ export default function GameBoard() {
 
         <div className="minion-row player-row">
           {curPlayer.board.map((minion, i) => (
-            <BoardMinionCard key={minion.id} minion={minion}
+            <BoardMinionCard key={minion.id} minion={minion} playerIdx={cur} boardIdx={i}
               isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
-              canAttack={minion.canAttack} onClick={() => handleSelectMinion(cur, i)} onInspect={setInspectedCard}
+              canAttack={minion.canAttack} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} isBuffed={buffedIds.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}
+        </div>
+
+        {/* Player hero — sits in a wood circle at the bottom edge of the board */}
+        <div className="board-hero-cup board-hero-cup--bottom">
+          <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
+            onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
         </div>
       </div>
 
@@ -957,8 +978,7 @@ export default function GameBoard() {
           <div className="hero-side-info hero-side-info--left">
             <ManaBar mana={curPlayer.mana} />
           </div>
-          <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
-            onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
+          <div className="hero-zone-spacer" />
           <div className="hero-side-info hero-side-info--right">
             <DeckCounter count={curPlayer.deck.length} isPlayer={true} />
           </div>
@@ -980,8 +1000,6 @@ export default function GameBoard() {
         </button>
         {state.pendingSpell && <button className="cancel-btn" onClick={handleCancelSpell}>Cancel</button>}
         {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
-        <div className="turn-indicator">Turn {state.turn}</div>
-        <div className="active-player-label">{curPlayer.hero.name}</div>
         <button className="scale-toggle-btn" onClick={toggleScale} title="Cycle display scale">
           {scale === 'sm' ? '🔍 1080p' : scale === 'md' ? '🔎 1200p' : '🔭 1440p'}
         </button>

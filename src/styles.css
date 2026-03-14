@@ -36,12 +36,14 @@ body {
 /* ── Setup Screen ─────────────────────────────────────────────────────────── */
 .setup-screen {
   min-height: 100vh;
+  height: 100vh;
   background: radial-gradient(ellipse at center, #1a0f06 0%, #0a0603 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .setup-title {

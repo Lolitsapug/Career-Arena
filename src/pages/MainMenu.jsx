@@ -4,6 +4,7 @@ import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
 import Avatar from '../components/ui/Avatar'
 import { useDeckStore } from '../store/deckStore'
+import { useTheme } from '../theme'
 import styles from './MainMenu.module.css'
 
 // Convert a saved deck (from deckStore) into a profile object for createInitialState
@@ -23,6 +24,7 @@ function deckToProfile(deck) {
 export default function MainMenu() {
   const navigate = useNavigate()
   const { savedDecks, player1Deck, player2Deck, isGenerating, generateError, generateDeck, selectDeck, deleteSavedDeck, clearSlot } = useDeckStore()
+  const { theme, setTheme, themes } = useTheme()
 
   const [importModal, setImportModal]   = useState(false)
   const [profileInput, setProfileInput] = useState('')
@@ -83,6 +85,24 @@ export default function MainMenu() {
           <div className={styles.logo}>
             <h1 className={styles.title}>Career Arena</h1>
             <p className={styles.tagline}>Build your deck from your career</p>
+          </div>
+
+          <div className={styles.themeSwitcher}>
+            <span className={styles.themeLabel}>Theme</span>
+            <div className={styles.themeToggle} role="tablist" aria-label="Theme selection">
+              {themes.map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={theme === option.id}
+                  className={`${styles.themeOption} ${theme === option.id ? styles.themeOptionActive : ''}`}
+                  onClick={() => setTheme(option.id)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Player slots */}

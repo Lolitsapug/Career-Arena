@@ -3,16 +3,19 @@ import MainMenu from './pages/MainMenu'
 import GameBoard from './pages/GameBoard'
 import DeckViewer from './pages/DeckViewer'
 import Leaderboard from './pages/Leaderboard'
+import { ThemeProvider } from './theme'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/"            element={<MainMenu />} />
-        <Route path="/game"        element={<GameBoard />} />
-        <Route path="/deck"        element={<DeckViewer />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/"            element={<MainMenu />} />
+          <Route path="/game"        element={<GameBoard />} />
+          <Route path="/deck"        element={<DeckViewer />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { useDeckStore } from '../store/deckStore'
 import styles from './DeckViewer.module.css'
+import BgParticles from '../components/BgParticles'
 
 const ABILITY_LABELS = {
   taunt:                      { label: 'Taunt',          icon: '🛡️', desc: 'Must be attacked first. Protects other minions and your hero.' },
@@ -173,6 +174,7 @@ export default function DeckViewer() {
 
   return (
     <div className={styles.page}>
+      <BgParticles />
       <div className={styles.topBar}>
         <button className={styles.backBtn} onClick={() => navigate('/')}>← Back</button>
         <h2 className={styles.pageTitle}>

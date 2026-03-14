@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from '../components/ui/Avatar'
 import styles from './Leaderboard.module.css'
+import BgParticles from '../components/BgParticles'
 
 const MOCK_PLAYERS = [
   { name: 'Jane Smith',    company: 'Google',    role: 'Senior Engineer',     wins: 42, losses: 8,  deck: ['⚙️','🌟','👑'] },
@@ -37,6 +38,7 @@ export default function Leaderboard() {
 
   return (
     <div className={styles.page}>
+      <BgParticles />
       <div className={styles.topBar}>
         <button className={styles.backBtn} onClick={() => navigate('/')}>← Back</button>
         <div className={styles.titleArea}>

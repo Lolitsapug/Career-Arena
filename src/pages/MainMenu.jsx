@@ -6,6 +6,7 @@ import Avatar from '../components/ui/Avatar'
 import { useDeckStore } from '../store/deckStore'
 import { useTheme } from '../theme'
 import styles from './MainMenu.module.css'
+import BgParticles from '../components/BgParticles'
 
 // Convert a saved deck (from deckStore) into a profile object for createInitialState
 function deckToProfile(deck) {
@@ -72,12 +73,7 @@ export default function MainMenu() {
 
   return (
     <div className={styles.page}>
-      {/* Background particles */}
-      <div className={styles.bgParticles}>
-        {Array.from({ length: 12 }, (_, i) => (
-          <div key={i} className={styles.particle} style={{ '--delay': `${i * 0.7}s`, '--x': `${(i * 73) % 100}%` }} />
-        ))}
-      </div>
+      <BgParticles />
 
       <div className={styles.layout}>
         {/* ── LEFT: Logo + actions ── */}

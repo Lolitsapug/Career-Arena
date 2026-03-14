@@ -3,6 +3,8 @@
   background: var(--bg-deep);
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
 }
 
 .topBar {

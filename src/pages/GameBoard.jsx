@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTheme } from '../theme.jsx';
+import BgParticles from '../components/BgParticles';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
   attackTarget, getValidTargets, resolveSpellTarget, getSpellTargets,
@@ -505,6 +507,65 @@ function getCenter(el) {
   return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
 }
 
+// ─── Board Ambience Overlay ───────────────────────────────────────────────────
+const EMBERS = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  x: `${5 + (i * 37 + 13) % 90}%`,
+  w: `${2 + (i * 7) % 4}px`,
+  dur: `${5 + (i * 1.3) % 5}s`,
+  delay: `${(i * 0.7) % 6}s`,
+  drift: `${-30 + (i * 17) % 60}px`,
+}));
+const SCANS = Array.from({ length: 4 }, (_, i) => ({
+  id: i,
+  y: `${10 + i * 22}%`,
+  dur: `${10 + i * 3}s`,
+  delay: `${i * 2.5}s`,
+}));
+const RUNE_CHARS = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ'];
+const RUNES = Array.from({ length: 14 }, (_, i) => ({
+  id: i,
+  char: RUNE_CHARS[i % RUNE_CHARS.length],
+  x: `${3 + (i * 41 + 7) % 94}%`,
+  y: `${5 + (i * 29 + 11) % 88}%`,
+  fs: `${0.7 + (i * 0.15) % 1.1}rem`,
+  dur: `${4 + (i * 0.9) % 5}s`,
+  delay: `${(i * 0.6) % 5}s`,
+}));
+
+
+function BoardAmbience() {
+  const { theme } = useTheme();
+  if (theme === 'arena') return (
+    <div className="board-ambience">
+      {EMBERS.map(e => (
+        <div key={e.id} className="ambience-ember" style={{
+          '--x': e.x, '--w': e.w, '--dur': e.dur, '--delay': e.delay, '--drift': e.drift,
+        }} />
+      ))}
+    </div>
+  );
+  if (theme === 'mono') return (
+    <div className="board-ambience">
+      {SCANS.map(s => (
+        <div key={s.id} className="ambience-scan" style={{
+          '--y': s.y, '--dur': s.dur, '--delay': s.delay,
+        }} />
+      ))}
+    </div>
+  );
+  if (theme === 'rune') return (
+    <div className="board-ambience">
+      {RUNES.map(r => (
+        <div key={r.id} className="ambience-rune" style={{
+          '--x': r.x, '--y': r.y, '--fs': r.fs, '--dur': r.dur, '--delay': r.delay,
+        }}>{r.char}</div>
+      ))}
+    </div>
+  );
+  return null;
+}
+
 // ─── Main GameBoard ───────────────────────────────────────────────────────────
 export default function GameBoard() {
   const location = useLocation();
@@ -792,6 +853,7 @@ export default function GameBoard() {
         )}
       </div>
       <div className="player-area opponent-area">
+        <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
             <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
@@ -840,6 +902,7 @@ export default function GameBoard() {
       </div>
 
       <div className="player-area current-area">
+        <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
             <ManaBar mana={curPlayer.mana} />

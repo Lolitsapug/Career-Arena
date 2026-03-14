@@ -951,14 +951,15 @@ export default function GameBoard() {
         <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
-            <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
             <div className="opp-mana-info">
               <div className="mana-crystal full" style={{ opacity: 0.5 }} />
               <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
             </div>
           </div>
           <div className="hero-zone-spacer" />
-          <div className="hero-side-info hero-side-info--right" />
+          <div className="hero-side-info hero-side-info--right">
+            <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
+          </div>
         </div>
       </div>
 

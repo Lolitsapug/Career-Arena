@@ -588,6 +588,21 @@ export default function GameBoard() {
   const [wasForfeit, setWasForfeit] = useState(false);
   const [buffedIds, setBuffedIds] = useState(new Set());
   const [drawAnims, setDrawAnims] = useState([]); // [{id, delay}]
+  const [scale, setScale] = useState(() => {
+    const saved = localStorage.getItem('ca-scale');
+    if (saved) { document.documentElement.dataset.scale = saved; return saved; }
+    // auto-detect: 1080p screens are ≤1120px tall
+    const auto = window.screen.height <= 1120 ? 'sm' : 'lg';
+    document.documentElement.dataset.scale = auto;
+    return auto;
+  });
+
+  function toggleScale() {
+    const next = scale === 'sm' ? 'lg' : 'sm';
+    document.documentElement.dataset.scale = next;
+    localStorage.setItem('ca-scale', next);
+    setScale(next);
+  }
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -599,12 +614,12 @@ export default function GameBoard() {
 
   function shakeMinionId(minionId, isHit) {
     const setter = isHit ? setHitIds : setShakingIds;
-    setter(prev => new Set([...prev, minionId]));
+    setter(prev => { const n = new Set(prev); n.add(minionId); return n; });
     setTimeout(() => setter(prev => { const n = new Set(prev); n.delete(minionId); return n; }), 420);
   }
 
   function flashHeroFn(playerIdx) {
-    setFlashHeroes(prev => new Set([...prev, playerIdx]));
+    setFlashHeroes(prev => { const n = new Set(prev); n.add(playerIdx); return n; });
     setTimeout(() => setFlashHeroes(prev => { const n = new Set(prev); n.delete(playerIdx); return n; }), 450);
   }
 
@@ -619,7 +634,7 @@ export default function GameBoard() {
       }
     });
     if (ids.length === 0) return;
-    setBuffedIds(prev => new Set([...prev, ...ids]));
+    setBuffedIds(prev => { const n = new Set(prev); ids.forEach(id => n.add(id)); return n; });
     setTimeout(() => setBuffedIds(prev => {
       const n = new Set(prev);
       ids.forEach(id => n.delete(id));
@@ -726,7 +741,7 @@ export default function GameBoard() {
     if (card.type === 'MINION') {
       const newMinion = ns.players[cur].board[ns.players[cur].board.length - 1];
       if (newMinion) {
-        setNewlyPlayed(prev => new Set([...prev, newMinion.id]));
+        setNewlyPlayed(prev => { const n = new Set(prev); n.add(newMinion.id); return n; });
         setTimeout(() => setNewlyPlayed(prev => { const n = new Set(prev); n.delete(newMinion.id); return n; }), 500);
         setTimeout(() => {
           const el = document.querySelector(`[data-minion-id="${newMinion.id}"]`);
@@ -935,6 +950,9 @@ export default function GameBoard() {
         {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
         <div className="turn-indicator">Turn {state.turn}</div>
         <div className="active-player-label">{curPlayer.hero.name}</div>
+        <button className="scale-toggle-btn" onClick={toggleScale} title="Toggle display scale">
+          {scale === 'sm' ? '🔍 1080p' : '🔭 1440p'}
+        </button>
       </div>
 
       {state.selectedMinion && !state.pendingSpell && (

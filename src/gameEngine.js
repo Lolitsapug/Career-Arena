@@ -471,13 +471,13 @@ export function getValidTargets(state) {
   if (tntPresent) {
     // Only taunt minions are valid — stealthed taunt minions still must be attacked
     return {
-      minions: oppBoard.map((m, i) => (m.abilities?.includes('taunt') && !m.stealthed ? i : -1)).filter(i => i !== -1),
+      minions: oppBoard.reduce((acc, m, i) => { if (m.abilities?.includes('taunt') && !m.stealthed) acc.push(i); return acc; }, []),
       hero: false,
     };
   }
   // Stealthed minions cannot be targeted
   return {
-    minions: oppBoard.map((m, i) => (isStealthed(m) ? -1 : i)).filter(i => i !== -1),
+    minions: oppBoard.reduce((acc, m, i) => { if (!isStealthed(m)) acc.push(i); return acc; }, []),
     hero: !isRushOnly,
   };
 }

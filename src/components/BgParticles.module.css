@@ -21,6 +21,7 @@
   border: 1px solid var(--border-subtle);
   opacity: 0;
   animation: particleFloat var(--dur, 10s) ease-in-out var(--delay, 0s) infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes particleFloat {

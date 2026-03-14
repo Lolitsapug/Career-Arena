@@ -46,6 +46,22 @@
   --theme-toggle-active-bg: rgba(201,162,39,0.18);
   --theme-toggle-active-border: rgba(201,162,39,0.4);
   --theme-toggle-active-text: #f5e6c8;
+
+  /* ── Scale tokens (1440p defaults) ── */
+  --card-w:        114px;
+  --card-h:        180px;
+  --card-back-w:   114px;
+  --card-back-h:   180px;
+  --minion-w:      120px;
+  --minion-h:      160px;
+  --minion-row-h:  130px;
+  --hero-size:     110px;
+  --sidebar-w:     80px;
+  --endturn-w:     130px;
+  --endturn-btn-w: 110px;
+  --hand-peek:    -32px;
+  --hand-hover-y: -54px;
+  --hand-hover-s:  1.18;
 }
 
 :root[data-theme='arena'] {
@@ -341,7 +357,7 @@ body {
   overflow: hidden;
   background: var(--board-felt);
   display: grid;
-  grid-template-rows: 1fr minmax(auto, 400px) 1fr;
+  grid-template-rows: 1fr minmax(auto, 450px) 1fr;
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     "left opponent  endturn"
@@ -358,7 +374,7 @@ body {
 }
 .board-side--left {
   grid-area: left;
-  width: 80px;
+  width: var(--sidebar-w);
   border-right: 3px solid;
   border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
   box-shadow: inset -8px 0 20px rgba(0,0,0,0.6), 4px 0 12px rgba(0,0,0,0.5);
@@ -419,8 +435,8 @@ body {
 
 /* ── Hero Portrait ─────────────────────────────────────────────────────────── */
 .hero-portrait {
-  width: 110px;
-  height: 110px;
+  width: var(--hero-size);
+  height: var(--hero-size);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -619,19 +635,19 @@ body {
   padding-bottom: 0;
 }
 .player-hand .hand-card {
-  margin-bottom: -32px;
+  margin-bottom: var(--hand-peek);
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
 }
 .player-hand .hand-card:hover {
-  transform: translateY(-54px) scale(1.18);
+  transform: translateY(var(--hand-hover-y)) scale(var(--hand-hover-s));
   z-index: 10;
   box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 20px rgba(201,162,39,0.3);
 }
 
 /* ── Hand Card ───────────────────────────────────────────────────────────── */
 .hand-card {
-  width: 114px;
-  height: 180px;
+  width: var(--card-w);
+  height: var(--card-h);
   border-radius: 8px;
   background: var(--card-bg);
   border: 2px solid var(--card-border);
@@ -648,8 +664,8 @@ body {
   overflow: hidden;
 }
 .hand-card--back {
-  width: 114px;
-  height: 180px;
+  width: var(--card-back-w);
+  height: var(--card-back-h);
   background: linear-gradient(135deg, #1e1b4b, #312e81);
   border: 2px solid #4c1d95;
   cursor: default;
@@ -809,7 +825,7 @@ body {
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 130px;
+  min-height: var(--minion-row-h);
   padding: 2px 1rem;
   position: relative;
 }
@@ -895,8 +911,8 @@ body {
 
 /* ── Board Minion ─────────────────────────────────────────────────────────── */
 .board-minion {
-  width: 120px;
-  height: 160px;
+  width: var(--minion-w);
+  height: var(--minion-h);
   border-radius: 10px;
   background: linear-gradient(180deg, #1e3a5f, #0f1f33);
   border: 2px solid #2563eb;
@@ -909,6 +925,7 @@ body {
   padding: 4px 3px 3px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
   transition: transform 0.12s, box-shadow 0.12s;
+  will-change: transform;
   user-select: none;
   flex-shrink: 0;
   overflow: hidden;
@@ -1080,7 +1097,7 @@ body {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  width: 130px;
+  width: var(--endturn-w);
   background: linear-gradient(180deg, #0e0704 0%, #1a0d05 40%, #1a0d05 60%, #0e0704 100%);
   border-left: 3px solid;
   border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
@@ -1105,7 +1122,7 @@ body {
 
 .end-turn-btn {
   padding: 0.65rem 0;
-  width: 110px;
+  width: var(--endturn-btn-w);
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
@@ -1149,6 +1166,27 @@ body {
 .cancel-btn:hover {
   background: linear-gradient(180deg, #991b1b, #b91c1c);
   box-shadow: 0 0 12px rgba(239,68,68,0.5);
+}
+
+.scale-toggle-btn {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0;
+  width: var(--endturn-btn-w);
+  font-size: 0.62rem;
+  font-family: var(--font-base);
+  font-weight: 500;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-dim);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+.scale-toggle-btn:hover {
+  background: rgba(201,162,39,0.12);
+  color: var(--gold);
+  border-color: rgba(201,162,39,0.4);
 }
 
 .turn-indicator {
@@ -1601,10 +1639,10 @@ body {
   z-index: 10;
 }
 @keyframes lunge {
-  0%   { transform: scale(1) translateY(0); filter: brightness(1.2); }
-  25%  { transform: scale(1.25) translateY(-10px); filter: brightness(1.8) drop-shadow(0 0 10px #fcd34d); }
+  0%   { transform: scale(1) translateY(0); }
+  25%  { transform: scale(1.25) translateY(-10px); box-shadow: 0 0 18px rgba(252,211,77,0.9); }
   60%  { transform: scale(0.92) translateY(3px); }
-  100% { transform: scale(1) translateY(0); filter: brightness(1); }
+  100% { transform: scale(1) translateY(0); }
 }
 
 /* Defender taking a hit */
@@ -1612,14 +1650,14 @@ body {
   animation: shake-hit 0.4s ease-out !important;
 }
 @keyframes shake-hit {
-  0%   { transform: translateX(0) brightness(1); }
-  10%  { transform: translateX(-10px); filter: brightness(2.5) saturate(0) hue-rotate(-15deg); }
-  25%  { transform: translateX(10px); filter: brightness(1.8) sepia(0.5); }
+  0%   { transform: translateX(0); }
+  10%  { transform: translateX(-10px); box-shadow: 0 0 16px rgba(239,68,68,0.9); }
+  25%  { transform: translateX(10px); box-shadow: 0 0 12px rgba(239,68,68,0.7); }
   40%  { transform: translateX(-7px); }
   55%  { transform: translateX(7px); }
   70%  { transform: translateX(-4px); }
   85%  { transform: translateX(4px); }
-  100% { transform: translateX(0); filter: brightness(1); }
+  100% { transform: translateX(0); }
 }
 
 /* Newly summoned minion */
@@ -1627,10 +1665,10 @@ body {
   animation: summon-appear 0.45s cubic-bezier(0.34,1.56,0.64,1) !important;
 }
 @keyframes summon-appear {
-  0%   { transform: scale(0) rotate(-15deg); opacity: 0; filter: brightness(4) blur(4px); }
-  50%  { transform: scale(1.2) rotate(4deg); opacity: 1; filter: brightness(2) blur(0); }
+  0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+  50%  { transform: scale(1.2) rotate(4deg); opacity: 1; box-shadow: 0 0 20px rgba(255,255,255,0.4); }
   75%  { transform: scale(0.93) rotate(-2deg); }
-  100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 /* Hero taking damage */
@@ -1639,9 +1677,9 @@ body {
 }
 @keyframes hero-flash {
   0%   { box-shadow: 0 0 0px rgba(239,68,68,0); }
-  20%  { box-shadow: 0 0 40px rgba(239,68,68,1), 0 0 80px rgba(239,68,68,0.7); filter: brightness(1.6); }
-  60%  { box-shadow: 0 0 20px rgba(239,68,68,0.6); filter: brightness(1.2); }
-  100% { box-shadow: 0 0 0px rgba(239,68,68,0); filter: brightness(1); }
+  20%  { box-shadow: 0 0 40px rgba(239,68,68,1), 0 0 80px rgba(239,68,68,0.7); }
+  60%  { box-shadow: 0 0 20px rgba(239,68,68,0.6); }
+  100% { box-shadow: 0 0 0px rgba(239,68,68,0); }
 }
 
 /* ── Impact particles ────────────────────────────────────────────────────── */
@@ -1727,9 +1765,9 @@ body {
   z-index: 3;
 }
 @keyframes ghost-float {
-  0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.9; filter: brightness(2); }
-  40%  { transform: translate(-50%,-90%) scale(0.8); opacity: 0.6; filter: brightness(3); }
-  100% { transform: translate(-50%,-170%) scale(0.3); opacity: 0; filter: blur(6px); }
+  0%   { transform: translate(-50%,-50%) scale(1);   opacity: 0.9; }
+  40%  { transform: translate(-50%,-90%) scale(0.8); opacity: 0.6; }
+  100% { transform: translate(-50%,-170%) scale(0.3); opacity: 0; }
 }
 
 .death-particle {
@@ -2213,13 +2251,51 @@ body {
   100% { opacity: 0;    transform: scale(0.8) rotate(0deg); }
 }
 
+/* ── Scale: sm (1080p) — manual toggle or auto-detected ──────────────────── */
+:root[data-scale='sm'] {
+  --card-w:        90px;
+  --card-h:        144px;
+  --card-back-w:   90px;
+  --card-back-h:   144px;
+  --minion-w:      96px;
+  --minion-h:      128px;
+  --minion-row-h:  104px;
+  --hero-size:     88px;
+  --sidebar-w:     64px;
+  --endturn-w:     108px;
+  --endturn-btn-w: 90px;
+  --hand-peek:    -26px;
+  --hand-hover-y: -44px;
+  --hand-hover-s:  1.14;
+}
+
+/* Auto-detect 1080p height */
+@media (max-height: 1120px) and (min-width: 769px) {
+  :root:not([data-scale='lg']) {
+    --card-w:        90px;
+    --card-h:        144px;
+    --card-back-w:   90px;
+    --card-back-h:   144px;
+    --minion-w:      96px;
+    --minion-h:      128px;
+    --minion-row-h:  104px;
+    --hero-size:     88px;
+    --sidebar-w:     64px;
+    --endturn-w:     108px;
+    --endturn-btn-w: 90px;
+    --hand-peek:    -26px;
+    --hand-hover-y: -44px;
+    --hand-hover-s:  1.14;
+  }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-height: 700px) {
   .hero-portrait { width: 58px; height: 58px; }
 }
 
 @media (max-width: 768px) {
-  .hand-card  { width: 70px; min-height: 96px; }
+  .hand-card    { width: 70px; min-height: 96px; }
   .board-minion { width: 64px; height: 80px; }
   .end-turn-zone { width: 90px; }
   .end-turn-btn { width: 82px; font-size: 0.72rem; }

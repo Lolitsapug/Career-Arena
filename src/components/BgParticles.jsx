@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import styles from './BgParticles.module.css'
 
 const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
@@ -7,7 +8,7 @@ const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
   rot: `${10 + (i * 11) % 30}deg`,
 }))
 
-export default function BgParticles() {
+export default memo(function BgParticles() {
   return (
     <div className={styles.bgParticles}>
       {PARTICLES.map((p, i) => (
@@ -19,4 +20,4 @@ export default function BgParticles() {
       ))}
     </div>
   )
-}
+})

@@ -111,9 +111,10 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
       company: companyFromExp,
       skills: Array.isArray(parsed.skills) ? parsed.skills.slice(0, 8) : [],
       experience: Array.isArray(parsed.experience) ? parsed.experience.length : 1,
+      profilePictureUrl: parsed.profilePictureUrl || null,
     }
   } catch {
-    deck.profileMeta = { name: deck.ownerName || 'Unknown', title: 'Professional', company: 'Unknown', skills: [], experience: 1 }
+    deck.profileMeta = { name: deck.ownerName || 'Unknown', title: 'Professional', company: 'Unknown', skills: [], experience: 1, profilePictureUrl: null }
   }
 
   deck.cards = deck.cards.slice(0, 10).map((card, i) => ({

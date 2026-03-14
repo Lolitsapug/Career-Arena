@@ -72,7 +72,7 @@ export default function PlayerZone({ player, side }) {
     <div className={`${styles.zone} ${styles[side]} ${myTurn ? styles.active : ''}`}>
       {/* Header */}
       <div className={styles.header}>
-        <HeroPortrait name={name} hp={pState.heroHp} isActive={myTurn} side={side} />
+        <HeroPortrait name={name} hp={pState.heroHp} isActive={myTurn} side={side} imageUrl={pState.profile?.profilePictureUrl} />
         <ManaBar current={pState.mana} max={pState.maxMana} />
         <div className={styles.deckCount}>
           <span className={styles.deckIcon}>🃏</span>
@@ -90,6 +90,7 @@ export default function PlayerZone({ player, side }) {
           hp={oppState.heroHp}
           isActive={false}
           side={side === 'left' ? 'right' : 'left'}
+          imageUrl={oppState.profile?.profilePictureUrl}
         />
         {attackerCard?.owner === player && (
           <span className={styles.targetHint}>Click to attack hero</span>

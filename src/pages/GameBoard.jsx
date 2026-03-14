@@ -54,6 +54,7 @@ function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
     company: 'Unknown',
     skills: [],
     experience: 1,
+    profilePictureUrl: null,
   };
   const hero = generateHero(profile);
   const cards = (savedDeck.cards || []).map(geminiCardToGameCard);
@@ -140,7 +141,13 @@ function Hero({ hero, playerIdx, isOpponent, isValidTarget, onClick, isCurrentPl
       onClick={onClick}
       title={`${hero.name} — ${hero.title} @ ${hero.company}`}
     >
-      <div className="hero-avatar">{hero.initials}</div>
+      <div className="hero-avatar">
+        {hero.profilePictureUrl ? (
+          <img src={hero.profilePictureUrl} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+        ) : (
+          hero.initials
+        )}
+      </div>
       <div className="hero-health">
         <span className="health-icon">❤</span>
         {hero.armor > 0 && <span className="hero-armor">🛡{hero.armor}</span>}

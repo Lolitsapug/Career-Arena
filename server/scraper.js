@@ -138,6 +138,7 @@ export async function scrapeLinkedIn(profileUrl) {
     const profileData = await page.evaluate(() => {
       const getText = sel => { const el = document.querySelector(sel); return el ? el.innerText.trim() : '' }
       const getAll  = sel => [...document.querySelectorAll(sel)].map(el => el.innerText.trim()).filter(Boolean)
+      const getAttr = (sel, attr) => { const el = document.querySelector(sel); return el ? el.getAttribute(attr) : null }
       return {
         name:       getText('h1'),
         headline:   getText('.text-body-medium.break-words'),
@@ -146,6 +147,7 @@ export async function scrapeLinkedIn(profileUrl) {
         experience: getAll('#experience ~ div .pvs-list__item--line-separated'),
         education:  getAll('#education ~ div .pvs-list__item--line-separated'),
         skills:     getAll('#skills ~ div .pvs-list__item--line-separated'),
+        profilePictureUrl: getAttr('img.pv-top-card-profile-picture__image', 'src') || getAttr('.presence-entity__image', 'src') || (getText('h1') ? getAttr(`img[alt="${getText('h1')}"]`, 'src') : null) || getAttr('img[alt="Profile picture"]', 'src'),
         rawText:    document.body.innerText.slice(0, 10000),
       }
     })

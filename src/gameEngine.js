@@ -393,6 +393,14 @@ export function endTurn(state) {
   return s;
 }
 
+/** Current player forfeits — other player wins immediately */
+export function forfeitGame(state) {
+  let s = deepClone(state);
+  s.winner = 1 - s.currentPlayer;
+  s.phase = 'gameover';
+  return s;
+}
+
 /** Called after the transition screen — actually begins the new player's turn */
 export function beginNewTurn(state) {
   let s = deepClone(state);

@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
   attackTarget, getValidTargets, resolveSpellTarget, getSpellTargets,
+  forfeitGame,
 } from '../gameEngine.js';
 import { generateDeck, generateHero } from '../cardGenerator.js';
 import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
@@ -395,15 +396,90 @@ function TransitionScreen({ nextPlayerName, onReady }) {
   );
 }
 
-function GameOverScreen({ winner, onRestart }) {
+function GameOverScreen({ winner, loser, forfeit, onRestart }) {
+  const [phase, setPhase] = useState('explode'); // explode → rise → done
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase('rise'), 1400);
+    const t2 = setTimeout(() => setPhase('done'),  2600);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  const loserAvatar = loser?.hero?.profilePictureUrl;
+  const winnerAvatar = winner?.hero?.profilePictureUrl;
+
+  // Memoised so random values don't re-roll on every render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fragments = useMemo(() => Array.from({ length: 16 }, (_, i) => {
+    const angle = (i / 16) * Math.PI * 2;
+    const dist = 80 + Math.random() * 130;
+    return {
+      tx: Math.cos(angle) * dist,
+      ty: Math.sin(angle) * dist,
+      size: 12 + Math.random() * 22,
+      delay: Math.random() * 0.15,
+      emoji: ['💥','🔥','💢','⚡','🌀','✨','🧨','💫'][i % 8],
+    };
+  }), []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Gold confetti for winner — memoised
+  const confetti = useMemo(() => Array.from({ length: 24 }, (_, i) => ({
+    left: `${(i / 24) * 100}%`,
+    delay: (i * 0.08) + 's',
+    dur: (1.2 + Math.random() * 0.8) + 's',
+    emoji: ['🏆','⭐','✨','🥇','💫','🎖️'][i % 6],
+  })), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <div className="transition-screen">
-      <div className="transition-card gameover-card">
-        <div className="transition-icon">🏆</div>
-        <h2>{winner.hero.name} Wins!</h2>
-        <p className="gameover-title">{winner.hero.title}</p>
-        <p className="gameover-company">@ {winner.hero.company}</p>
-        <button className="ready-btn" onClick={onRestart}>Play Again</button>
+    <div className="gameover-screen">
+      {/* Loser explosion */}
+      <div className={`gameover-loser ${phase === 'explode' ? 'go-exploding' : 'go-hidden'}`}>
+        <div className="go-loser-avatar">
+          {loserAvatar
+            ? <img src={loserAvatar} alt={loser.hero.name} />
+            : <span>{loser?.hero?.initials || '?'}</span>}
+        </div>
+        <div className="go-loser-name">{loser?.hero?.name}</div>
+        {phase === 'explode' && fragments.map((f, i) => (
+          <div
+            key={i}
+            className="go-fragment"
+            style={{
+              '--tx': `${f.tx}px`,
+              '--ty': `${f.ty}px`,
+              '--fsize': `${f.size}px`,
+              animationDelay: `${f.delay}s`,
+            }}
+          >{f.emoji}</div>
+        ))}
+      </div>
+
+      {/* Winner reveal */}
+      <div className={`gameover-winner-reveal ${phase !== 'explode' ? 'go-rising' : ''}`}>
+        {phase !== 'explode' && confetti.map((c, i) => (
+          <div
+            key={i}
+            className="go-confetti"
+            style={{ left: c.left, animationDelay: c.delay, animationDuration: c.dur }}
+          >{c.emoji}</div>
+        ))}
+
+        <div className="go-trophy">🏆</div>
+        <div className="go-winner-avatar">
+          {winnerAvatar
+            ? <img src={winnerAvatar} alt={winner.hero.name} />
+            : <span>{winner?.hero?.initials || '?'}</span>}
+        </div>
+        <h2 className="go-winner-name">{winner?.hero?.name}</h2>
+        <p className="go-winner-title">{winner?.hero?.title}</p>
+        <p className="go-winner-company">@ {winner?.hero?.company}</p>
+        {forfeit && <p className="go-forfeit-note">Victory by forfeit</p>}
+
+        {phase === 'done' && (
+          <button className="ready-btn go-play-again" onClick={onRestart}>
+            ↩ Back to Menu
+          </button>
+        )}
       </div>
     </div>
   );
@@ -437,6 +513,8 @@ export default function GameBoard() {
   const [newlyPlayed, setNewlyPlayed] = useState(new Set());
   const [inspectedCard, setInspectedCard] = useState(null);
   const [cantAffordId, setCantAffordId] = useState(null);
+  const [forfeitConfirm, setForfeitConfirm] = useState(false);
+  const [wasForfeit, setWasForfeit] = useState(false);
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -625,11 +703,27 @@ export default function GameBoard() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [state]);
 
-  if (state.phase === 'gameover')   return <GameOverScreen winner={state.players[state.winner]} onRestart={() => navigate('/')} />;
+  if (state.phase === 'gameover')   return <GameOverScreen winner={state.players[state.winner]} loser={state.players[1 - state.winner]} forfeit={wasForfeit} onRestart={() => navigate('/')} />;
   if (state.phase === 'transition') return <TransitionScreen nextPlayerName={state.players[state.currentPlayer].hero.name} onReady={handleReady} />;
 
   return (
     <div className="game-board">
+      {/* Forfeit button — top left */}
+      <div className="forfeit-zone">
+        {forfeitConfirm ? (
+          <div className="forfeit-confirm">
+            <span>Forfeit?</span>
+            <button className="forfeit-yes" onClick={() => {
+              setWasForfeit(true);
+              setState(forfeitGame(state));
+            }}>Yes</button>
+            <button className="forfeit-no" onClick={() => setForfeitConfirm(false)}>No</button>
+          </div>
+        ) : (
+          <button className="forfeit-btn" onClick={() => setForfeitConfirm(true)}>🏳 Forfeit</button>
+        )}
+      </div>
+
       <div className="player-area opponent-area">
         <div className="hero-zone">
           <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}

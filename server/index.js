@@ -61,7 +61,7 @@ if (isProduction) {
   const distPath = join(__dirname, '..', 'dist')
   app.use(express.static(distPath))
   // SPA fallback — all non-API routes serve index.html
-  app.get('*', (req, res) => {
+  app.get('/{*splat}', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' })
     res.sendFile(join(distPath, 'index.html'))
   })

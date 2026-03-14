@@ -617,8 +617,10 @@ body {
 .opponent-hand-top {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: var(--sidebar-w);
+  right: var(--endturn-w);
+  display: flex;
+  justify-content: center;
   z-index: 50;
   pointer-events: none;
 }

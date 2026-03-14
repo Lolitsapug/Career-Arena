@@ -9,6 +9,7 @@ import {
 } from '../gameEngine.js';
 import { generateDeck, generateHero } from '../cardGenerator.js';
 import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
+import { useSocket } from '../hooks/useSocket.js';
 
 // ─── Convert a Gemini-generated deck card to game engine format ───────────────
 let _cardIdCtr = 0;
@@ -381,7 +382,7 @@ const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, is
   );
 });
 
-const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
+const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, isOpponent, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
   return (
     <div
@@ -389,7 +390,7 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
       className={`board-minion
         ${isSelected       ? 'selected-attacker' : ''}
         ${isValidTarget    ? 'valid-target'       : ''}
-        ${canAttack        ? 'can-attack'         : 'exhausted'}
+        ${canAttack ? 'can-attack' : (!isOpponent ? 'exhausted' : '')}
         ${minion.abilities?.includes('taunt') ? 'has-taunt' : ''}
         ${minion.hasDivineShield ? 'has-divine' : ''}
         ${minion.stealthed  ? 'is-stealthed'      : ''}
@@ -602,9 +603,32 @@ export default function GameBoard() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { profile1, profile2, deck1, deck2 } = location.state || {};
+  const { profile1, profile2, deck1, deck2, online, roomCode, initialState } = location.state || {};
+  const isOnline = !!online;
+  const { emit, on } = useSocket();
 
-  const [state, setState] = useState(() => beginNewTurn(buildInitialState(deck1, deck2, profile1, profile2)));
+  const [state, setState] = useState(() => {
+    if (isOnline && initialState) return initialState;
+    return beginNewTurn(buildInitialState(deck1, deck2, profile1, profile2));
+  });
+
+  // In online mode, myIndex is fixed; in hotseat, it follows currentPlayer
+  const myIndex = isOnline ? (state.myIndex ?? 0) : state.currentPlayer;
+
+  // Listen for state updates from server
+  useEffect(() => {
+    if (!isOnline) return;
+    const unsub1 = on('state-update', (newState) => setState(newState));
+    const unsub2 = on('opponent-disconnected', () => {
+      // State will already be gameover from server
+    });
+    return () => { unsub1(); unsub2(); };
+  }, [isOnline, on]);
+
+  // Helper to send actions to server
+  function emitAction(action, payload = {}) {
+    emit('game-action', { code: roomCode, action, payload });
+  }
 
   const [anims, setAnims]             = useState([]);
   const [deathGhosts, setDeathGhosts] = useState([]);
@@ -768,20 +792,30 @@ export default function GameBoard() {
     }
   }
 
+  // "me" is always the local player's side (bottom); "them" is always opponent (top)
+  const me = myIndex;
+  const them = 1 - me;
+  // cur/opp for game logic — who is currently taking a turn
   const cur = state.currentPlayer;
   const opp = 1 - cur;
-  const curPlayer = state.players[cur];
-  const oppPlayer = state.players[opp];
+  // For rendering, the bottom of the board is always "me"
+  const curPlayer = state.players[me];
+  const oppPlayer = state.players[them];
+  const isMyTurn = cur === me;
   const validTargets = getValidTargets(state);
   const spellTargets = getSpellTargets(state);
 
   const handlePlayCard = useCallback((cardIdx) => {
-    const card = state.players[cur].hand[cardIdx];
+    if (isOnline && !isMyTurn) return;
+    const card = state.players[me].hand[cardIdx];
     if (!card) return;
-    // Not enough mana — show indicator and bail
-    if (state.players[cur].mana.current < card.cost) {
+    if (state.players[me].mana.current < card.cost) {
       setCantAffordId(card.id);
       setTimeout(() => setCantAffordId(null), 600);
+      return;
+    }
+    if (isOnline) {
+      emitAction('play-card', { cardIndex: cardIdx });
       return;
     }
     const { state: ns } = playCard(state, cardIdx);
@@ -796,9 +830,7 @@ export default function GameBoard() {
           if (pos) queueAnim({ kind: 'summon', attackType: getAttackType(card), x: pos.x, y: pos.y }, 0, 600);
         }, 50);
       }
-      // Flash any minions that got buffed by a battlecry
       flashBuffedMinions(state, ns, cur);
-      // Animate drawn cards
       const abs = card.abilities || [];
       const drawCount = abs.includes('battlecry_draw_2') ? 2 : abs.includes('battlecry_draw_1') ? 1 : 0;
       if (drawCount > 0) setTimeout(() => triggerDrawAnimation(drawCount), 200);
@@ -808,8 +840,8 @@ export default function GameBoard() {
       const isHeroDmg = abs.includes('spell_damage_hero_5') || abs.includes('spell_damage_hero');
       if (isHeroDmg) {
         const dmg = abs.includes('spell_damage_hero_5') ? 5 : 3;
-        const casterEl = document.querySelector(`[data-hero-idx="${cur}"]`);
-        const targetEl = document.querySelector(`[data-hero-idx="${opp}"]`);
+        const casterEl = document.querySelector(`[data-hero-idx="${me}"]`);
+        const targetEl = document.querySelector(`[data-hero-idx="${them}"]`);
         const casterPos = getCenter(casterEl);
         const targetPos = getCenter(targetEl);
         if (casterPos && targetPos) {
@@ -821,36 +853,41 @@ export default function GameBoard() {
       }
     }
     setState(ns);
-  }, [state, cur]);
+  }, [state, me, them, cur, isOnline, isMyTurn]);
 
   const handleSelectMinion = useCallback((playerIdx, boardIdx) => {
+    if (isOnline && !isMyTurn) return;
+
     if (state.pendingBattlecryTarget) {
-      // Silence targeting — must pick an enemy minion
-      if (playerIdx !== opp) return; // must be enemy
+      if (playerIdx !== them) return;
+      if (isOnline) { emitAction('resolve-battlecry', { targetIdx: boardIdx }); return; }
       setState(resolveBattlecryTarget(state, boardIdx));
       return;
     }
     if (state.pendingSpell) {
-      const isFriendly = playerIdx === cur;
+      const isFriendly = playerIdx === me;
       const abs = state.pendingSpell.card.abilities || [];
       const isBuff = abs.some(a => a.startsWith('spell_buff_target'));
       const isDmg  = abs.some(a => ['spell_damage_3', 'spell_damage_2'].includes(a));
+      const isFreeze = abs.includes('spell_freeze');
       const targetEl = document.querySelector(`[data-minion-id="${state.players[playerIdx].board[boardIdx]?.id}"]`);
       const targetPos = getCenter(targetEl);
 
       if (isBuff && isFriendly) {
-        if (targetPos) queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 0, 600);
+        if (!isOnline && targetPos) queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 0, 600);
+        if (isOnline) { emitAction('resolve-spell', { targetType: 'friendly_minion', targetIdx: boardIdx }); return; }
         setState(resolveSpellTarget(state, 'friendly_minion', boardIdx));
-      } else if (isDmg && !isFriendly) {
+      } else if ((isDmg || isFreeze) && !isFriendly) {
+        if (isOnline) { emitAction('resolve-spell', { targetType: 'enemy_minion', targetIdx: boardIdx }); return; }
         const ns = resolveSpellTarget(state, 'enemy_minion', boardIdx);
-        const casterEl = document.querySelector(`[data-hero-idx="${cur}"]`);
+        const casterEl = document.querySelector(`[data-hero-idx="${me}"]`);
         const casterPos = getCenter(casterEl);
         if (casterPos && targetPos) {
           queueAnim({ kind: 'projectile', attackType: 'magic', startX: casterPos.x, startY: casterPos.y, endX: targetPos.x, endY: targetPos.y }, 0, 400);
           const dmg = abs.includes('spell_damage_3') ? 3 : 2;
           queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 310, 600);
           queueAnim({ kind: 'damage-num', x: targetPos.x, y: targetPos.y - 20, amount: dmg }, 330, 900);
-          const target = state.players[opp].board[boardIdx];
+          const target = state.players[them].board[boardIdx];
           if (target && target.health - dmg <= 0) {
             setTimeout(() => {
               setDeathGhosts(prev => [...prev, { id: `ghost_spell_${makeId()}`, minion: { ...target, art: getArt(target) }, x: targetPos.x, y: targetPos.y }]);
@@ -863,58 +900,71 @@ export default function GameBoard() {
       return;
     }
 
-    if (playerIdx === cur) {
+    if (playerIdx === me) {
+      if (isOnline) { emitAction('select-minion', { boardIdx }); return; }
       setState(selectMinion(state, playerIdx, boardIdx));
       return;
     }
 
     if (!state.selectedMinion) return;
-    const attacker = state.players[cur].board[state.selectedMinion.boardIdx];
-    const defender = state.players[opp].board[boardIdx];
+    const attacker = state.players[me].board[state.selectedMinion.boardIdx];
+    const defender = state.players[them].board[boardIdx];
     if (!attacker || !defender) return;
 
+    if (isOnline) { emitAction('attack', { targetType: 'enemy_minion', targetIdx: boardIdx }); return; }
     const atkPos = getCenter(document.querySelector(`[data-minion-id="${attacker.id}"]`));
     const defPos = getCenter(document.querySelector(`[data-minion-id="${defender.id}"]`));
     const ns = attackTarget(state, 'enemy_minion', boardIdx);
-    triggerAttack(state, ns, atkPos, defPos, getAttackType(attacker), attacker.attack, false, opp);
-    // Animate cards drawn by deathrattles that fired during this attack
+    triggerAttack(state, ns, atkPos, defPos, getAttackType(attacker), attacker.attack, false, them);
     const drawnCards = ns.players[cur].hand.length - state.players[cur].hand.length;
     if (drawnCards > 0) setTimeout(() => triggerDrawAnimation(drawnCards), 400);
     setState(ns);
-  }, [state, cur, opp]);
+  }, [state, me, them, cur, isOnline, isMyTurn]);
 
   const handleHeroClick = useCallback((playerIdx) => {
-    if (state.pendingSpell || playerIdx !== opp || !state.selectedMinion) return;
-    if (!validTargets.hero) return; // taunt minion present — must attack it first
-    const attacker = state.players[cur].board[state.selectedMinion.boardIdx];
+    if (isOnline && !isMyTurn) return;
+    if (state.pendingSpell || playerIdx !== them || !state.selectedMinion) return;
+    if (!validTargets.hero) return;
+    const attacker = state.players[me].board[state.selectedMinion.boardIdx];
     if (!attacker) return;
+    if (isOnline) { emitAction('attack', { targetType: 'enemy_hero', targetIdx: null }); return; }
     const atkPos  = getCenter(document.querySelector(`[data-minion-id="${attacker.id}"]`));
-    const heroPos = getCenter(document.querySelector(`[data-hero-idx="${opp}"]`));
+    const heroPos = getCenter(document.querySelector(`[data-hero-idx="${them}"]`));
     const ns = attackTarget(state, 'enemy_hero', null);
-    triggerAttack(state, ns, atkPos, heroPos, getAttackType(attacker), attacker.attack, true, opp);
+    triggerAttack(state, ns, atkPos, heroPos, getAttackType(attacker), attacker.attack, true, them);
     setState(ns);
-  }, [state, cur, opp]);
+  }, [state, me, them, isOnline, isMyTurn]);
 
-  const handleEndTurn     = useCallback(() => { if (!state.pendingSpell) setState(endTurn(state)); }, [state]);
+  const handleEndTurn = useCallback(() => {
+    if (isOnline && !isMyTurn) return;
+    if (state.pendingSpell) return;
+    if (isOnline) { emitAction('end-turn'); return; }
+    setState(endTurn(state));
+  }, [state, isOnline, isMyTurn]);
   const handleReady       = useCallback(() => setState(beginNewTurn(state)), [state]);
-  const handleCancelSpell = useCallback(() => setState(s => ({ ...s, pendingSpell: null })), []);
+  const handleCancelSpell = useCallback(() => {
+    if (isOnline) { emitAction('cancel-spell'); return; }
+    setState(s => ({ ...s, pendingSpell: null }));
+  }, [isOnline]);
 
   const stateRef = useRef(state);
-  useEffect(() => { stateRef.current = state; });
+  const isOnlineRef = useRef(isOnline);
+  useEffect(() => { stateRef.current = state; isOnlineRef.current = isOnline; });
   useEffect(() => {
     function onKeyDown(e) {
       if (e.code !== 'Space' || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
       e.preventDefault();
       const s = stateRef.current;
+      if (isOnlineRef.current) return; // no keyboard shortcuts in online mode
       if (s.phase === 'play' && !s.pendingSpell) setState(endTurn(s));
       else if (s.phase === 'transition') setState(beginNewTurn(s));
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []); // registers once, reads latest state via ref
+  }, []);
 
   if (state.phase === 'gameover')   return <GameOverScreen winner={state.players[state.winner]} loser={state.players[1 - state.winner]} forfeit={wasForfeit} onRestart={() => navigate('/')} />;
-  if (state.phase === 'transition') return <TransitionScreen nextPlayerName={state.players[state.currentPlayer].hero.name} onReady={handleReady} />;
+  if (!isOnline && state.phase === 'transition') return <TransitionScreen nextPlayerName={state.players[state.currentPlayer].hero.name} onReady={handleReady} />;
 
   return (
     <div className="game-board">
@@ -932,7 +982,7 @@ export default function GameBoard() {
             <span>Forfeit?</span>
             <button className="forfeit-yes" onClick={() => {
               setWasForfeit(true);
-              setState(forfeitGame(state));
+              if (isOnline) { emitAction('forfeit'); } else { setState(forfeitGame(state)); }
             }}>Yes</button>
             <button className="forfeit-no" onClick={() => setForfeitConfirm(false)}>No</button>
           </div>
@@ -951,28 +1001,26 @@ export default function GameBoard() {
         <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
-            <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
-            <div className="opp-mana-info">
-              <div className="mana-crystal full" style={{ opacity: 0.5 }} />
-              <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
-            </div>
+            <ManaBar mana={oppPlayer.mana} />
           </div>
           <div className="hero-zone-spacer" />
-          <div className="hero-side-info hero-side-info--right" />
+          <div className="hero-side-info hero-side-info--right">
+            <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
+          </div>
         </div>
       </div>
 
       <div className="board-area">
         {/* Opponent hero — sits in a wood circle at the top edge of the board */}
         <div className="board-hero-cup board-hero-cup--top">
-          <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
+          <Hero hero={oppPlayer.hero} playerIdx={them} isOpponent isValidTarget={validTargets.hero}
             isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
-            onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
+            onClick={() => handleHeroClick(them)} isCurrentPlayer={false} isFlashing={flashHeroes.has(them)} />
         </div>
 
         <div className="minion-row opponent-row">
           {oppPlayer.board.map((minion, i) => (
-            <BoardMinionCard key={minion.id} minion={minion} playerIdx={opp} boardIdx={i} isSelected={false}
+            <BoardMinionCard key={minion.id} minion={minion} playerIdx={them} boardIdx={i} isSelected={false} isOpponent={true}
               isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i)) || (!!state.pendingBattlecryTarget && state.pendingBattlecryTarget.type === 'silence')}
               canAttack={false} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
@@ -988,10 +1036,10 @@ export default function GameBoard() {
 
         <div className="minion-row player-row">
           {curPlayer.board.map((minion, i) => (
-            <BoardMinionCard key={minion.id} minion={minion} playerIdx={cur} boardIdx={i}
-              isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
+            <BoardMinionCard key={minion.id} minion={minion} playerIdx={me} boardIdx={i}
+              isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === me}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
-              canAttack={minion.canAttack} onClick={handleSelectMinion} onInspect={setInspectedCard}
+              canAttack={minion.canAttack && isMyTurn} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} isBuffed={buffedIds.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}
@@ -999,8 +1047,8 @@ export default function GameBoard() {
 
         {/* Player hero — sits in a wood circle at the bottom edge of the board */}
         <div className="board-hero-cup board-hero-cup--bottom">
-          <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
-            onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
+          <Hero hero={curPlayer.hero} playerIdx={me} isOpponent={false} isValidTarget={false}
+            onClick={() => handleHeroClick(me)} isCurrentPlayer={isMyTurn} isFlashing={flashHeroes.has(me)} />
         </div>
       </div>
 
@@ -1018,7 +1066,7 @@ export default function GameBoard() {
         <div className="hand-zone player-hand">
           {curPlayer.hand.map((card, i) => (
             <HandCard key={card.id} card={card}
-              canPlay={curPlayer.mana.current >= card.cost && (card.type === 'SPELL' || curPlayer.board.length < 7)}
+              canPlay={isMyTurn && curPlayer.mana.current >= card.cost && (card.type === 'SPELL' || curPlayer.board.length < 7)}
               cantAfford={cantAffordId === card.id}
               onClick={() => handlePlayCard(i)} isOpponent={false} onInspect={setInspectedCard} />
           ))}
@@ -1026,12 +1074,14 @@ export default function GameBoard() {
       </div>
 
       <div className="end-turn-zone">
-        <button className={`end-turn-btn ${(state.pendingSpell || state.pendingBattlecryTarget) ? 'disabled' : ''}`}
-          onClick={(state.pendingSpell || state.pendingBattlecryTarget) ? undefined : handleEndTurn}>
-          {(state.pendingSpell || state.pendingBattlecryTarget) ? 'Choose Target' : 'END TURN'}
+        <button className={`end-turn-btn ${(state.pendingSpell || state.pendingBattlecryTarget || (isOnline && !isMyTurn)) ? 'disabled' : ''}`}
+          onClick={(state.pendingSpell || state.pendingBattlecryTarget || (isOnline && !isMyTurn)) ? undefined : handleEndTurn}>
+          {(state.pendingSpell || state.pendingBattlecryTarget) ? 'Choose Target' : (isOnline && !isMyTurn) ? 'OPPONENT\'S TURN' : 'END TURN'}
         </button>
         {state.pendingSpell && <button className="cancel-btn" onClick={handleCancelSpell}>Cancel</button>}
-        {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
+        {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => {
+          if (isOnline) { emitAction('skip-battlecry'); } else { setState(s => ({ ...s, pendingBattlecryTarget: null })); }
+        }}>Skip</button>}
         <button className="scale-toggle-btn" onClick={toggleScale} title="Cycle display scale">
           {scale === 'sm' ? '🔍 1080p' : scale === 'md' ? '🔎 1200p' : '🔭 1440p'}
         </button>

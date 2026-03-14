@@ -130,6 +130,9 @@ export default function MainMenu() {
             }}>
               {bothReady ? '⚔️  Enter the Arena' : 'Select both decks to play'}
             </Button>
+            <Button variant="secondary" onClick={() => navigate('/lobby')}>
+              Online Play
+            </Button>
             <div className={styles.secondaryActions}>
               <Button variant="ghost" disabled={!player1Deck} onClick={() => navigate('/deck')}>
                 View Decks

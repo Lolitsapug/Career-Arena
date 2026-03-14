@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { generateMockDeck, SAMPLE_PROFILE, SAMPLE_PROFILE_2 } from '../utils/cardFactory'
 
-const API_BASE = 'http://localhost:3001'
+const API_BASE = window.location.origin
 const STORAGE_KEY = 'career-arena-decks'
 
 function loadSavedDecks() {

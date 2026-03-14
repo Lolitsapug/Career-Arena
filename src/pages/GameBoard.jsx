@@ -20,6 +20,9 @@ const VALID_ABILITIES = new Set([
   'battlecry_buff_self', 'battlecry_silence',
   'deathrattle_draw_1', 'deathrattle_summon_intern',
   'deathrattle_damage_all', 'deathrattle_heal_hero',
+  'spell_heal_hero', 'spell_damage_hero', 'spell_damage_hero_5',
+  'spell_damage_3', 'spell_aoe_2', 'spell_freeze',
+  'spell_buff_all_1', 'spell_buff_target', 'spell_draw_2',
 ]);
 
 // Detect abilities that may be described in text but not in the abilities array (old format cards)
@@ -80,9 +83,9 @@ function geminiCardToGameCard(card) {
   return {
     id: card.id || `g${++_cardIdCtr}_${Math.random().toString(36).slice(2, 6)}`,
     name: card.name || 'Unknown',
-    type: 'MINION',
+    type: card.type === 'SPELL' ? 'SPELL' : 'MINION',
     cost: Math.min(Math.max(Number(card.cost) || 1, 0), 10),
-    attack: Math.min(Math.max(Number(card.attack) || 1, 0), 10),
+    attack: card.type === 'SPELL' ? 0 : Math.min(Math.max(Number(card.attack) || 1, 0), 10),
     health,
     maxHealth: health,
     description,
@@ -113,7 +116,7 @@ function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
   const hand = cards.splice(0, initialHandSize);
-  return { profile, hero, mana: { current: 0, max: 0 }, hand, deck: cards, board: [] };
+  return { profile, hero, mana: { current: 0, max: 0 }, hand, deck: cards, board: [], discard: [] };
 }
 
 function buildInitialState(deck1, deck2, profile1, profile2) {
@@ -122,13 +125,13 @@ function buildInitialState(deck1, deck2, profile1, profile2) {
     const p = profile1 || { name: 'Player 1', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
     const deck = generateDeck(p); const hero = generateHero(p);
     const hand = deck.splice(0, 3);
-    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [] };
+    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [], discard: [] };
   })();
   const p2 = deck2 ? buildPlayerFromSavedDeck(deck2, 4) : (() => {
     const p = profile2 || { name: 'Player 2', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
     const deck = generateDeck(p); const hero = generateHero(p);
     const hand = deck.splice(0, 4);
-    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [] };
+    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [], discard: [] };
   })();
   return {
     phase: 'play', currentPlayer: 0, turn: 1, winner: null, log: [],
@@ -181,6 +184,15 @@ const ABILITY_INFO = {
   deathrattle_summon_intern: { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
   deathrattle_damage_all:    { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Deal 1 damage to ALL minions.' },
   deathrattle_heal_hero:     { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Restore 4 HP to your hero.' },
+  spell_heal_hero:           { label: 'Lesser Heal',     icon: '💚', desc: 'Restore 6 HP to your hero.' },
+  spell_damage_hero:         { label: 'Mind Blast',      icon: '🎯', desc: 'Deal 3 damage to the enemy hero.' },
+  spell_damage_hero_5:       { label: 'Pyroblast',       icon: '🔥', desc: 'Deal 5 damage to the enemy hero.' },
+  spell_damage_3:            { label: 'Frostbolt',       icon: '❄️', desc: 'Deal 3 damage to a target minion.' },
+  spell_aoe_2:               { label: 'Consecration',    icon: '💥', desc: 'Deal 2 damage to all enemy minions.' },
+  spell_freeze:              { label: 'Frost Nova',      icon: '🌨️', desc: 'Freeze an enemy minion — it skips its next attack.' },
+  spell_buff_all_1:          { label: 'Mark of the Wild',icon: '🌿', desc: 'Give all friendly minions +1/+1.' },
+  spell_buff_target:         { label: 'Power Word',      icon: '⬆️', desc: 'Give a friendly minion +2/+2.' },
+  spell_draw_2:              { label: 'Arcane Intellect', icon: '🎴', desc: 'Draw 2 cards.' },
 };
 
 // ─── Card inspect modal ───────────────────────────────────────────────────────
@@ -320,26 +332,45 @@ function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect })
       <div className="card-art">{card.type === 'SPELL' ? '✨' : getArt(card)}</div>
       <div className="card-name">{card.name}</div>
 
-      <div className="card-ability-rows">
-        {abilities.map(a => {
-          const info = ABILITY_INFO[a];
-          return (
-            <div key={a} className="card-ability-row">
-              <span className="card-ability-row-icon">{info.icon}</span>
-              <span className="card-ability-row-text"><strong>{info.label}:</strong> {info.desc}</span>
+      {card.type === 'SPELL' ? (
+        <div className="spell-text-body">
+          {abilities.slice(0, 1).map(a => {
+            const info = ABILITY_INFO[a];
+            return (
+              <div key={a} className="spell-text-block">
+                <div className="spell-ability-name">{info.icon} {info.label}</div>
+                <div className="spell-ability-desc">{info.desc}</div>
+              </div>
+            );
+          })}
+          {abilities.length === 0 && legacyDesc && (
+            <div className="spell-text-block">
+              <div className="spell-ability-desc">{legacyDesc}</div>
             </div>
-          );
-        })}
-        {legacyDesc && (
-          <div className="card-ability-row">
-            <span className="card-ability-row-icon">✨</span>
-            <span className="card-ability-row-text">
-              {legacyName && <strong>{legacyName}: </strong>}
-              {legacyDesc}
-            </span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : (
+        <div className="card-ability-rows">
+          {abilities.map(a => {
+            const info = ABILITY_INFO[a];
+            return (
+              <div key={a} className="card-ability-row">
+                <span className="card-ability-row-icon">{info.icon}</span>
+                <span className="card-ability-row-text"><strong>{info.label}:</strong> {info.desc}</span>
+              </div>
+            );
+          })}
+          {legacyDesc && (
+            <div className="card-ability-row">
+              <span className="card-ability-row-icon">✨</span>
+              <span className="card-ability-row-text">
+                {legacyName && <strong>{legacyName}: </strong>}
+                {legacyDesc}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {card.type === 'MINION' && (
         <div className="card-stats">

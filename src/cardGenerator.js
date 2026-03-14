@@ -136,10 +136,10 @@ export function generateDeck(profile) {
     }
   }
 
-  // 3. Skill cards (up to 6)
+  // 3. Skill cards (up to 10)
   const skills = profile.skills || [];
   for (const skill of skills) {
-    if (cards.length >= 8) break;
+    if (cards.length >= 10) break;
     const sl = skill.toLowerCase().trim();
     for (const [kw, template] of Object.entries(SKILL_MAP)) {
       if (sl.includes(kw) || kw.includes(sl)) {
@@ -152,12 +152,12 @@ export function generateDeck(profile) {
   // 4. Fill remainder from shuffled default pool
   const pool = shuffle(DEFAULT_POOL);
   let pi = 0;
-  while (cards.length < 10) {
+  while (cards.length < 12) {
     cards.push(make(pool[pi % pool.length]));
     pi++;
   }
 
-  return shuffle(cards.slice(0, 10));
+  return shuffle(cards.slice(0, 12));
 }
 
 export function generateHero(profile) {

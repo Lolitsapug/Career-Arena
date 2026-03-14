@@ -5,20 +5,30 @@ const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' 
 
 const SYSTEM_PROMPT = `You are a card game designer for "Career Arena", a Hearthstone-style card game where a player's LinkedIn career becomes a deck of cards.
 
-Given a LinkedIn profile (scraped text), generate EXACTLY 10 cards and 1 passive ability as a JSON object.
+Given a LinkedIn profile (scraped text), generate EXACTLY 12 cards and 1 passive ability as a JSON object.
+About 9 cards should be MINION type and 3 should be SPELL type.
 
-RULES FOR CARDS:
+RULES FOR MINION CARDS (type: "MINION"):
 - Each card represents a job/role from the person's career
 - name: short job title only (e.g. "Senior Engineer", "VP of Product", "Startup Founder")
 - cost: 1-8 (senior/impactful roles cost more)
 - attack: 1-7 (reflects leadership/impact of the role)
 - hp: 1-8 (reflects longevity/stability of the role)
-- abilities: an array of 0-2 ability strings chosen from the VALID ABILITIES list below
-- About 35% of cards should have no abilities, 45% one ability, 20% two abilities
+- abilities: an array of 0-2 ability strings chosen from the MINION VALID ABILITIES list below
+- About 35% of minions should have no abilities, 45% one ability, 20% two abilities
 - rarity: "common" (no abilities), "rare" (1 ability), "legendary" (2 abilities, reserved for top 1-2 roles)
-- abilityDescription: a short flavour sentence explaining the ability in career terms (e.g. "Blocks all attacks — like a solid project manager protecting the team."). null if no abilities.
+- abilityDescription: a short flavour sentence explaining the ability in career terms. null if no abilities.
 
-VALID ABILITIES (use ONLY these exact strings):
+RULES FOR SPELL CARDS (type: "SPELL"):
+- Each spell represents a career action, skill, or pivotal moment
+- name: evocative short name (e.g. "Executive Burnout", "Thought Leadership", "Budget Cut", "Team Reorg")
+- cost: 1-6
+- attack: 0, hp: 0 (spells have no stats)
+- abilities: exactly 1 ability string from the SPELL VALID ABILITIES list below
+- rarity: "rare" or "legendary"
+- abilityDescription: a flavour sentence describing the spell effect in career terms.
+
+MINION VALID ABILITIES (use ONLY these exact strings):
 - "taunt"                    — Must be attacked first. Use for defensive/management roles.
 - "divine_shield"            — Absorbs the first hit. Use for stable long-tenure roles.
 - "rush"                     — Can attack enemy minions immediately when played. Use for go-getter/sales roles.
@@ -34,6 +44,17 @@ VALID ABILITIES (use ONLY these exact strings):
 - "deathrattle_summon_intern"— Deathrattle: Summon a 1/1 Intern when destroyed. Use for mentor roles.
 - "deathrattle_damage_all"   — Deathrattle: Deal 1 damage to ALL minions when destroyed. Use for high-drama exits.
 - "deathrattle_heal_hero"    — Deathrattle: Restore 4 HP to your hero when destroyed. Use for loyal/support roles.
+
+SPELL VALID ABILITIES (use ONLY these exact strings):
+- "spell_heal_hero"          — Restore 6 HP to your hero. Use for recovery/wellness moments.
+- "spell_damage_hero"        — Deal 3 damage to the enemy hero directly. Use for aggressive career moves.
+- "spell_damage_hero_5"      — Deal 5 damage to the enemy hero. Use for major disruptions.
+- "spell_damage_3"           — Deal 3 damage to a target enemy minion. Use for targeted elimination.
+- "spell_aoe_2"              — Deal 2 damage to ALL enemy minions. Use for company-wide restructuring.
+- "spell_freeze"             — Freeze an enemy minion (can't attack next turn). Use for bureaucracy/blocking roles.
+- "spell_buff_all_1"         — Give all friendly minions +1/+1. Use for team morale boosts.
+- "spell_buff_target"        — Give a friendly minion +2/+2. Use for performance reviews/promotions.
+- "spell_draw_2"             — Draw 2 cards. Use for research sprints or learning sabbaticals.
 
 RULES FOR PASSIVE:
 - Pick the player's most prominent skill and turn it into a passive game bonus
@@ -51,6 +72,7 @@ Respond ONLY with valid JSON, no markdown, no explanation. Schema:
   "cards": [
     {
       "id": "card-1",
+      "type": "MINION" | "SPELL",
       "name": "string",
       "role": "string",
       "company": "string",
@@ -137,6 +159,9 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
     'battlecry_buff_friendly', 'battlecry_buff_self', 'battlecry_silence',
     'deathrattle_draw_1', 'deathrattle_summon_intern',
     'deathrattle_damage_all', 'deathrattle_heal_hero',
+    'spell_heal_hero', 'spell_damage_hero', 'spell_damage_hero_5',
+    'spell_damage_3', 'spell_aoe_2', 'spell_freeze',
+    'spell_buff_all_1', 'spell_buff_target', 'spell_draw_2',
   ])
 
   // Fuzzy-match ability strings in case Gemini returns slightly wrong casing/format
@@ -162,27 +187,40 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
     if (s.includes('deathrattle') && s.includes('damage')) return 'deathrattle_damage_all'
     if (s.includes('deathrattle')) return 'deathrattle_draw_1'
     if (s.includes('battlecry')) return 'battlecry_draw_1'
+    if (s.includes('spell') && s.includes('heal')) return 'spell_heal_hero'
+    if (s.includes('spell') && s.includes('damage_hero_5')) return 'spell_damage_hero_5'
+    if (s.includes('spell') && s.includes('damage_hero')) return 'spell_damage_hero'
+    if (s.includes('spell') && s.includes('damage_3')) return 'spell_damage_3'
+    if (s.includes('spell') && s.includes('aoe')) return 'spell_aoe_2'
+    if (s.includes('spell') && s.includes('freeze')) return 'spell_freeze'
+    if (s.includes('spell') && s.includes('buff_all')) return 'spell_buff_all_1'
+    if (s.includes('spell') && s.includes('buff_target')) return 'spell_buff_target'
+    if (s.includes('spell') && s.includes('draw')) return 'spell_draw_2'
     return null
   }
 
   console.log('[gemini] Raw abilities from model:', deck.cards.map(c => `${c.name}: ${JSON.stringify(c.abilities)}`).join(' | '))
 
-  deck.cards = deck.cards.slice(0, 10).map((card, i) => {
-    const hp = Math.min(Math.max(Number(card.hp) || 2, 1), 8)
+  deck.cards = deck.cards.slice(0, 12).map((card, i) => {
+    const isSpell = card.type === 'SPELL'
+    const hp = isSpell ? 0 : Math.min(Math.max(Number(card.hp) || 2, 1), 8)
+    const attack = isSpell ? 0 : Math.min(Math.max(Number(card.attack) || 1, 0), 7)
     const rawAbilities = Array.isArray(card.abilities) ? card.abilities : []
-    const abilities = [...new Set(rawAbilities.map(normaliseAbility).filter(Boolean))].slice(0, 2)
+    const maxAbilities = isSpell ? 1 : 2
+    const abilities = [...new Set(rawAbilities.map(normaliseAbility).filter(Boolean))].slice(0, maxAbilities)
     return {
       id: card.id || `card-${i + 1}`,
-      name: card.name || 'Unknown Role',
+      type: isSpell ? 'SPELL' : 'MINION',
+      name: card.name || (isSpell ? 'Career Event' : 'Unknown Role'),
       role: card.role || card.name || 'Professional',
       company: card.company || 'Unknown',
       cost: Math.min(Math.max(Number(card.cost) || 1, 0), 8),
-      attack: Math.min(Math.max(Number(card.attack) || 1, 0), 7),
+      attack,
       hp,
       abilities,
       abilityDescription: card.abilityDescription || null,
       rarity: ['common', 'rare', 'legendary'].includes(card.rarity) ? card.rarity : 'common',
-      artGradient: getGradient(card.role || card.name),
+      artGradient: isSpell ? 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)' : getGradient(card.role || card.name),
     }
   })
 

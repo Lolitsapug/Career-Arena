@@ -11,17 +11,33 @@ function isMinionDead(minion) {
   return Boolean(minion?.dead) || (Number.isFinite(health) && health <= 0);
 }
 
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function drawCards(player, n) {
   const p = deepClone(player);
+  if (!p.discard) p.discard = [];
   for (let i = 0; i < n; i++) {
     if (p.deck.length === 0) {
-      // Fatigue: deal 1 damage (simplified – just skip)
-      break;
+      if (p.discard.length > 0) {
+        // Reshuffle discard pile back into deck
+        p.deck = shuffle(p.discard.map(c => ({
+          ...c, canAttack: false, attacksAvailable: 0, dead: false, damaged: false,
+        })));
+        p.discard = [];
+      } else {
+        break; // truly out of cards
+      }
     }
     if (p.hand.length < 10) {
       p.hand.push(p.deck.shift());
     }
-    // else card is burned
+    // else card is burned (hand full)
   }
   return p;
 }
@@ -210,12 +226,31 @@ function resolveSpell(state, playerIdx, card, targetType, targetIdx) {
     s = removeDeadAndResolve(s); // fire deathrattles on AOE kills
   }
   if (abs.includes('spell_destroy_weak')) {
-    // Mark weakest enemy minion as dead so deathrattle fires properly
     const weakIdx = s.players[oppIdx].board.findIndex(m => m.health <= 2);
     if (weakIdx !== -1) {
       s.players[oppIdx].board[weakIdx].dead = true;
       s = removeDeadAndResolve(s);
     }
+  }
+  if (abs.includes('spell_heal_hero')) {
+    const hero = s.players[playerIdx].hero;
+    hero.health = Math.min(hero.health + 6, hero.maxHealth || 30);
+  }
+  if (abs.includes('spell_damage_hero_5')) {
+    s.players[oppIdx].hero = applyDamageToHero(s.players[oppIdx].hero, 5);
+  } else if (abs.includes('spell_damage_hero')) {
+    s.players[oppIdx].hero = applyDamageToHero(s.players[oppIdx].hero, 3);
+  }
+  if (abs.includes('spell_freeze')) {
+    if (targetType === 'enemy_minion' && targetIdx != null) {
+      s.players[oppIdx].board[targetIdx].frozen = true;
+      s.players[oppIdx].board[targetIdx].canAttack = false;
+      s.players[oppIdx].board[targetIdx].attacksAvailable = 0;
+    }
+  }
+  if (abs.includes('spell_aoe_2')) {
+    s.players[oppIdx].board = s.players[oppIdx].board.map(m => applyDamageToMinion(m, 2));
+    s = removeDeadAndResolve(s);
   }
   return s;
 }
@@ -227,7 +262,7 @@ export function createInitialState(profile1, profile2) {
     const deck = generateDeck(profile);
     const hero = generateHero(profile);
     const hand = deck.splice(0, initialHandSize);
-    return { profile, hero, mana: { current: 0, max: 0 }, hand, deck, board: [] };
+    return { profile, hero, mana: { current: 0, max: 0 }, hand, deck, board: [], discard: [] };
   }
 
   return {
@@ -259,12 +294,13 @@ export function startTurn(state) {
   // Draw a card
   s.players[pi] = drawCards(p, 1);
 
-  // Enable attacks on all board minions (clear rushOnly restriction at start of each new turn)
+  // Enable attacks on all board minions (clear rushOnly + frozen at start of each new turn)
   s.players[pi].board = s.players[pi].board.map(m => ({
     ...m,
-    canAttack: true,
-    attacksAvailable: m.abilities?.includes('windfury') ? 2 : 1,
+    canAttack: !m.frozen,
+    attacksAvailable: m.frozen ? 0 : (m.abilities?.includes('windfury') ? 2 : 1),
     rushOnly: false,
+    frozen: false, // frozen lasts only one turn
   }));
 
   s.selectedMinion = null;
@@ -287,8 +323,10 @@ export function playCard(state, cardIndex) {
   // Deduct mana
   s.players[pi].mana.current -= card.cost;
 
-  // Remove from hand
+  // Remove from hand and add to discard pile
   s.players[pi].hand.splice(cardIndex, 1);
+  if (!s.players[pi].discard) s.players[pi].discard = [];
+  s.players[pi].discard.push(card);
 
   if (card.type === 'MINION') {
     // Place on board
@@ -311,7 +349,7 @@ export function playCard(state, cardIndex) {
   } else {
     // Spell
     const needsTarget = (card.abilities || []).some(a =>
-      ['spell_damage_3', 'spell_damage_2', 'spell_buff_target', 'spell_buff_target_3'].includes(a)
+      ['spell_damage_3', 'spell_damage_2', 'spell_buff_target', 'spell_buff_target_3', 'spell_freeze'].includes(a)
     );
     if (needsTarget) {
       s.pendingSpell = { cardIndex, card };
@@ -508,10 +546,11 @@ export function getSpellTargets(state) {
 
   const isDamage = abs.some(a => ['spell_damage_3', 'spell_damage_2'].includes(a));
   const isBuff = abs.some(a => ['spell_buff_target', 'spell_buff_target_3'].includes(a));
+  const isFreeze = abs.includes('spell_freeze');
 
   return {
     friendlyMinions: isBuff ? state.players[pi].board.map((_, i) => i) : [],
-    enemyMinions: isDamage ? state.players[oppIdx].board.map((_, i) => i) : [],
+    enemyMinions: (isDamage || isFreeze) ? state.players[oppIdx].board.map((_, i) => i) : [],
     hero: false,
   };
 }

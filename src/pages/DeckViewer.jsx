@@ -24,6 +24,15 @@ const ABILITY_LABELS = {
   deathrattle_summon_intern:  { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
   deathrattle_damage_all:     { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Deal 1 damage to all minions.' },
   deathrattle_heal_hero:      { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Restore 4 HP to your hero.' },
+  spell_heal_hero:            { label: 'Lesser Heal',     icon: '💚', desc: 'Restore 6 HP to your hero.' },
+  spell_damage_hero:          { label: 'Mind Blast',      icon: '🎯', desc: 'Deal 3 damage to the enemy hero.' },
+  spell_damage_hero_5:        { label: 'Pyroblast',       icon: '🔥', desc: 'Deal 5 damage to the enemy hero.' },
+  spell_damage_3:             { label: 'Frostbolt',       icon: '❄️', desc: 'Deal 3 damage to a target minion.' },
+  spell_aoe_2:                { label: 'Consecration',    icon: '💥', desc: 'Deal 2 damage to all enemy minions.' },
+  spell_freeze:               { label: 'Frost Nova',      icon: '🌨️', desc: 'Freeze an enemy minion — it skips its next attack.' },
+  spell_buff_all_1:           { label: 'Mark of the Wild',icon: '🌿', desc: 'Give all friendly minions +1/+1.' },
+  spell_buff_target:          { label: 'Power Word',      icon: '⬆️', desc: 'Give a friendly minion +2/+2.' },
+  spell_draw_2:               { label: 'Arcane Intellect', icon: '🎴', desc: 'Draw 2 cards.' },
 }
 
 function getArt(card) {
@@ -44,12 +53,13 @@ function getArt(card) {
 
 function CardModal({ card, onClose }) {
   const abilities = (card.abilities || []).filter(a => ABILITY_LABELS[a])
+  const isSpell = card.type === 'SPELL'
   return (
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
         <button className={styles.modalClose} onClick={onClose}>✕</button>
 
-        <div className={styles.modalArt}>{getArt(card)}</div>
+        <div className={styles.modalArt}>{isSpell ? '✨' : getArt(card)}</div>
         <div className={styles.modalName}>{card.name}</div>
         {card.role && card.role !== card.name && (
           <div className={styles.modalRole}>{card.role}{card.company ? ` · ${card.company}` : ''}</div>
@@ -61,16 +71,18 @@ function CardModal({ card, onClose }) {
             <span className={styles.modalStatLabel}>Cost</span>
             <span className={styles.modalStatVal}>{card.cost}</span>
           </div>
-          <div className={styles.modalStat}>
-            <span className={styles.modalStatIcon}>⚔️</span>
-            <span className={styles.modalStatLabel}>Attack</span>
-            <span className={styles.modalStatVal}>{card.attack}</span>
-          </div>
-          <div className={styles.modalStat}>
-            <span className={styles.modalStatIcon}>❤️</span>
-            <span className={styles.modalStatLabel}>Health</span>
-            <span className={styles.modalStatVal}>{card.hp ?? card.health}</span>
-          </div>
+          {!isSpell && <>
+            <div className={styles.modalStat}>
+              <span className={styles.modalStatIcon}>⚔️</span>
+              <span className={styles.modalStatLabel}>Attack</span>
+              <span className={styles.modalStatVal}>{card.attack}</span>
+            </div>
+            <div className={styles.modalStat}>
+              <span className={styles.modalStatIcon}>❤️</span>
+              <span className={styles.modalStatLabel}>Health</span>
+              <span className={styles.modalStatVal}>{card.hp ?? card.health}</span>
+            </div>
+          </>}
         </div>
 
         {abilities.length > 0 && (
@@ -106,47 +118,68 @@ function CardModal({ card, onClose }) {
 function CardThumb({ card, onClick }) {
   const abilities = (card.abilities || []).filter(a => ABILITY_LABELS[a])
   const hasTaunt = abilities.includes('taunt')
-  // Only show legacy text for genuinely old-format cards that used specialAbility object
+  const isSpell = card.type === 'SPELL'
   const legacyDesc = abilities.length === 0 && card.specialAbility?.description
   const legacyName = abilities.length === 0 && card.specialAbility?.name
 
   return (
     <div
-      className={`${styles.cardThumb} ${hasTaunt ? styles.cardThumbTaunt : ''}`}
+      className={`${styles.cardThumb} ${hasTaunt ? styles.cardThumbTaunt : ''} ${isSpell ? styles.cardThumbSpell : ''}`}
       onClick={onClick}
       title="Click to expand"
     >
       <div className={styles.thumbCost}>{card.cost}</div>
-      <div className={styles.thumbArt}>{getArt(card)}</div>
+      <div className={styles.thumbArt}>{isSpell ? '✨' : getArt(card)}</div>
       <div className={styles.thumbName}>{card.name}</div>
 
-      <div className={styles.thumbAbilityRows}>
-        {abilities.map(a => {
-          const info = ABILITY_LABELS[a]
-          return (
-            <div key={a} className={styles.thumbAbilityRow}>
-              <span className={styles.thumbAbilityIcon}>{info.icon}</span>
+      {isSpell ? (
+        <div className={styles.spellTextBody}>
+          {abilities.slice(0, 1).map(a => {
+            const info = ABILITY_LABELS[a]
+            return (
+              <div key={a} className={styles.spellTextBlock}>
+                <div className={styles.spellAbilityName}>{info.icon} {info.label}</div>
+                <div className={styles.spellAbilityDesc}>{info.desc}</div>
+              </div>
+            )
+          })}
+          {abilities.length === 0 && legacyDesc && (
+            <div className={styles.spellTextBlock}>
+              <div className={styles.spellAbilityDesc}>{legacyDesc}</div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className={styles.thumbAbilityRows}>
+          {abilities.map(a => {
+            const info = ABILITY_LABELS[a]
+            return (
+              <div key={a} className={styles.thumbAbilityRow}>
+                <span className={styles.thumbAbilityIcon}>{info.icon}</span>
+                <span className={styles.thumbAbilityText}>
+                  <strong>{info.label}:</strong> {info.desc}
+                </span>
+              </div>
+            )
+          })}
+          {legacyDesc && (
+            <div className={styles.thumbAbilityRow}>
+              <span className={styles.thumbAbilityIcon}>✨</span>
               <span className={styles.thumbAbilityText}>
-                <strong>{info.label}:</strong> {info.desc}
+                {legacyName && <strong>{legacyName}: </strong>}
+                {legacyDesc}
               </span>
             </div>
-          )
-        })}
-        {legacyDesc && (
-          <div className={styles.thumbAbilityRow}>
-            <span className={styles.thumbAbilityIcon}>✨</span>
-            <span className={styles.thumbAbilityText}>
-              {legacyName && <strong>{legacyName}: </strong>}
-              {legacyDesc}
-            </span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
-      <div className={styles.thumbStats}>
-        <span className={styles.thumbAtk}>⚔{card.attack}</span>
-        <span className={styles.thumbHp}>❤{card.hp ?? card.health}</span>
-      </div>
+      {!isSpell && (
+        <div className={styles.thumbStats}>
+          <span className={styles.thumbAtk}>⚔{card.attack}</span>
+          <span className={styles.thumbHp}>❤{card.hp ?? card.health}</span>
+        </div>
+      )}
     </div>
   )
 }

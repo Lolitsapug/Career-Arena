@@ -49,6 +49,37 @@ function removeDeadMinions(board) {
   return board.filter(m => !m.dead);
 }
 
+function resolveDeathrattles(state, playerIdx, deadMinions) {
+  let s = deepClone(state);
+  for (const m of deadMinions) {
+    const abs = m.abilities || [];
+    if (abs.includes('deathrattle_draw_1')) {
+      s.players[playerIdx] = drawCards(s.players[playerIdx], 1);
+    }
+    if (abs.includes('deathrattle_summon_intern') && s.players[playerIdx].board.length < 7) {
+      s.players[playerIdx].board.push({
+        id: `intern_dr_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+        name: 'Intern', attack: 1, health: 1, maxHealth: 1, cost: 0,
+        type: 'MINION', description: 'Summoned by Deathrattle',
+        abilities: [], hasDivineShield: false,
+        canAttack: false, attacksAvailable: 0, damaged: false, dead: false,
+      });
+    }
+  }
+  return s;
+}
+
+// Remove dead minions and fire their deathrattles
+function removeDeadAndResolve(state) {
+  let s = deepClone(state);
+  for (let pi = 0; pi < 2; pi++) {
+    const dead = s.players[pi].board.filter(m => m.dead);
+    s.players[pi].board = s.players[pi].board.filter(m => !m.dead);
+    if (dead.length > 0) s = resolveDeathrattles(s, pi, dead);
+  }
+  return s;
+}
+
 function resolveBattlecry(state, playerIdx, card) {
   let s = deepClone(state);
   const abs = card.abilities || [];
@@ -66,7 +97,7 @@ function resolveBattlecry(state, playerIdx, card) {
     s.players[oppIdx].hero = applyDamageToHero(s.players[oppIdx].hero, dmg);
     s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
   }
-  if (abs.includes('battlecry_buff_all_1') || abs.includes('battlecry_buff_all_2')) {
+  if (abs.includes('battlecry_buff_all_1') || abs.includes('battlecry_buff_all_2') || abs.includes('battlecry_buff_friendly')) {
     const bonus = abs.includes('battlecry_buff_all_2') ? 2 : 1;
     s.players[playerIdx].board = s.players[playerIdx].board.map(m => ({
       ...m,
@@ -196,11 +227,12 @@ export function startTurn(state) {
   // Draw a card
   s.players[pi] = drawCards(p, 1);
 
-  // Enable attacks on all board minions
+  // Enable attacks on all board minions (clear rushOnly restriction at start of each new turn)
   s.players[pi].board = s.players[pi].board.map(m => ({
     ...m,
     canAttack: true,
     attacksAvailable: m.abilities?.includes('windfury') ? 2 : 1,
+    rushOnly: false,
   }));
 
   s.selectedMinion = null;
@@ -228,10 +260,13 @@ export function playCard(state, cardIndex) {
 
   if (card.type === 'MINION') {
     // Place on board
+    const hasCharge = card.abilities?.includes('charge');
+    const hasRush   = card.abilities?.includes('rush');
     const minion = {
       ...card,
-      canAttack: card.abilities?.includes('charge'),
-      attacksAvailable: card.abilities?.includes('charge') ? 1 : 0,
+      canAttack: hasCharge || hasRush,
+      attacksAvailable: (hasCharge || hasRush) ? 1 : 0,
+      rushOnly: hasRush && !hasCharge, // rush minions can't attack hero on first turn
       dead: false,
     };
     s.players[pi].board.push(minion);
@@ -311,10 +346,10 @@ export function attackTarget(state, targetType, targetIdx) {
     s.players[oppIdx].board[targetIdx] = applyDamageToMinion(defender, attacker.attack);
     s.players[atkPI].board[atkBI] = applyDamageToMinion(attacker, defender.attack);
 
-    s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
-    s.players[atkPI].board = removeDeadMinions(s.players[atkPI].board);
+    s = removeDeadAndResolve(s);
   } else if (targetType === 'enemy_hero') {
     if (hasTnt) return s; // must attack taunt first
+    if (attacker.rushOnly) return s; // rush minions can't attack heroes until next turn
     s.players[oppIdx].hero = applyDamageToHero(s.players[oppIdx].hero, attacker.attack);
     // Attacker takes no damage when hitting hero
     // Exhaust attacker
@@ -379,9 +414,12 @@ function checkWin(state) {
 /** Determine valid attack targets given selected attacker */
 export function getValidTargets(state) {
   if (!state.selectedMinion) return { minions: [], hero: false };
-  const oppIdx = 1 - state.selectedMinion.playerIdx;
+  const { playerIdx, boardIdx } = state.selectedMinion;
+  const attacker = state.players[playerIdx].board[boardIdx];
+  const oppIdx = 1 - playerIdx;
   const oppBoard = state.players[oppIdx].board;
   const tntPresent = hasTaunt(oppBoard);
+  const isRushOnly = attacker?.rushOnly;
 
   if (tntPresent) {
     return {
@@ -391,7 +429,7 @@ export function getValidTargets(state) {
   }
   return {
     minions: oppBoard.map((_, i) => i),
-    hero: true,
+    hero: !isRushOnly,
   };
 }
 

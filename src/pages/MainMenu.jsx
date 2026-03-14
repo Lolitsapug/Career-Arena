@@ -149,9 +149,16 @@ export default function MainMenu() {
         <div className={styles.right}>
           <div className={styles.libraryHeader}>
             <h2 className={styles.libraryTitle}>Deck Library</h2>
-            <button className={styles.importBtn} onClick={() => setImportModal(true)}>
-              + Import LinkedIn
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {savedDecks.length > 0 && (
+                <button className={styles.clearAllBtn} onClick={() => { if (window.confirm('Clear all saved decks?')) clearAllDecks() }}>
+                  Clear All
+                </button>
+              )}
+              <button className={styles.importBtn} onClick={() => setImportModal(true)}>
+                + Import LinkedIn
+              </button>
+            </div>
           </div>
 
           {savedDecks.length === 0 ? (

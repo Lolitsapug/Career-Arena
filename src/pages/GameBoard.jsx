@@ -9,24 +9,31 @@ import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
 
 // ─── Convert a Gemini-generated deck card to game engine format ───────────────
 let _cardIdCtr = 0;
-function geminiCardToGameCard(card) {
-  // Map Gemini's specialAbility to a game engine ability string
-  const abilities = [];
-  const ability = card.specialAbility;
-  if (ability) {
-    const desc = (ability.description || '').toLowerCase();
-    const trigger = ability.trigger || '';
-    if (desc.includes('draw 2') || desc.includes('draw two')) abilities.push('battlecry_draw_2');
-    else if (desc.includes('draw')) abilities.push('battlecry_draw_1');
-    if (desc.includes('taunt')) abilities.push('taunt');
-    if (desc.includes('divine shield')) abilities.push('divine_shield');
-    if (desc.includes('charge')) abilities.push('charge');
-    if (desc.includes('+1/+1') && desc.includes('all')) abilities.push('battlecry_buff_all_1');
-    if (desc.includes('+2/+2') && desc.includes('all')) abilities.push('battlecry_buff_all_2');
-    if (desc.includes('deal 1 damage') && desc.includes('all')) abilities.push('battlecry_aoe_1');
-    if (desc.includes('deal 2 damage') && desc.includes('all')) abilities.push('battlecry_aoe_2');
-  }
+const VALID_ABILITIES = new Set([
+  'taunt', 'divine_shield', 'rush', 'charge',
+  'battlecry_draw_1', 'battlecry_draw_2',
+  'battlecry_aoe_1', 'battlecry_aoe_2',
+  'battlecry_buff_friendly', 'battlecry_buff_all_1', 'battlecry_buff_all_2',
+  'deathrattle_draw_1', 'deathrattle_summon_intern',
+]);
 
+// Detect abilities that may be described in text but not in the abilities array (old format cards)
+function inferAbilitiesFromText(existingAbilities, description) {
+  const extras = [];
+  const d = (description || '').toLowerCase();
+  if (!existingAbilities.includes('taunt') && (d.includes('taunt') || d.includes('must be attacked first') || d.includes('protects other minions'))) extras.push('taunt');
+  if (!existingAbilities.includes('divine_shield') && (d.includes('divine shield') || d.includes('absorbs the first'))) extras.push('divine_shield');
+  if (!existingAbilities.includes('rush') && d.includes('rush')) extras.push('rush');
+  if (!existingAbilities.includes('charge') && d.includes('charge')) extras.push('charge');
+  return [...existingAbilities, ...extras].slice(0, 2);
+}
+
+function geminiCardToGameCard(card) {
+  const rawAbilities = (Array.isArray(card.abilities) ? card.abilities : [])
+    .filter(a => VALID_ABILITIES.has(a));
+  const description = card.abilityDescription || card.specialAbility?.description || '';
+  // Always run inference — fills in abilities that were described in text but not listed (old format)
+  const abilities = inferAbilitiesFromText(rawAbilities, description);
   const health = Math.min(Math.max(Number(card.hp) || 2, 1), 10);
   return {
     id: card.id || `g${++_cardIdCtr}_${Math.random().toString(36).slice(2, 6)}`,
@@ -36,7 +43,7 @@ function geminiCardToGameCard(card) {
     attack: Math.min(Math.max(Number(card.attack) || 1, 0), 10),
     health,
     maxHealth: health,
-    description: card.specialAbility?.description || '',
+    description,
     abilities,
     hasDivineShield: abilities.includes('divine_shield'),
     canAttack: false,
@@ -112,6 +119,97 @@ function getArt(card) {
   return '🃏';
 }
 
+// ─── Ability metadata ─────────────────────────────────────────────────────────
+const ABILITY_INFO = {
+  taunt:                     { label: 'Taunt',        icon: '🛡️', desc: 'Must be attacked before other minions or the hero.' },
+  divine_shield:             { label: 'Divine Shield', icon: '✨', desc: 'Absorbs the first source of damage, then breaks.' },
+  rush:                      { label: 'Rush',          icon: '⚡', desc: 'Can attack enemy minions immediately when played. Cannot attack the hero until next turn.' },
+  charge:                    { label: 'Charge',        icon: '💨', desc: 'Can attack immediately, including the enemy hero.' },
+  battlecry_draw_1:          { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 1 card.' },
+  battlecry_draw_2:          { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 2 cards.' },
+  battlecry_aoe_1:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 1 damage to all enemies.' },
+  battlecry_aoe_2:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 2 damage to all enemies.' },
+  battlecry_buff_friendly:   { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_1:      { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_2:      { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +2/+2.' },
+  deathrattle_draw_1:        { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Draw 1 card.' },
+  deathrattle_summon_intern: { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
+};
+
+// ─── Card inspect modal ───────────────────────────────────────────────────────
+function CardInspectModal({ card, onClose }) {
+  const abilities = (card.abilities || []).filter(a => ABILITY_INFO[a]);
+  // Old-format cards store ability info in specialAbility object
+  const legacyAbility = card.specialAbility;
+  const hasAnything = abilities.length > 0 || legacyAbility || card.description;
+
+  return (
+    <div className="inspect-backdrop" onMouseDown={onClose}>
+      <div className="inspect-card" onMouseDown={e => e.stopPropagation()}>
+        <button className="inspect-close" onClick={onClose}>✕</button>
+        <div className="inspect-art">{card.type === 'SPELL' ? '✨' : getArt(card)}</div>
+        <div className="inspect-name">{card.name}</div>
+        {(card.role && card.role !== card.name) && (
+          <div className="inspect-role">{card.role}{card.company ? ` · ${card.company}` : ''}</div>
+        )}
+        <div className="inspect-stats">
+          <div className="inspect-stat"><span>💎</span><span>{card.cost}</span><span>Cost</span></div>
+          {card.type !== 'SPELL' && <>
+            <div className="inspect-stat"><span>⚔️</span><span>{card.attack}</span><span>Attack</span></div>
+            <div className="inspect-stat"><span>❤️</span><span>{card.health}</span><span>Health</span></div>
+          </>}
+        </div>
+
+        {/* New-format: structured abilities */}
+        {abilities.length > 0 && (
+          <div className="inspect-abilities">
+            {abilities.map(a => {
+              const info = ABILITY_INFO[a];
+              return (
+                <div key={a} className="inspect-ability">
+                  <span className="inspect-ability-icon">{info.icon}</span>
+                  <div>
+                    <div className="inspect-ability-label">{info.label}</div>
+                    <div className="inspect-ability-desc">{info.desc}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Old-format: free-text specialAbility */}
+        {abilities.length === 0 && legacyAbility && (
+          <div className="inspect-abilities">
+            <div className="inspect-ability">
+              <span className="inspect-ability-icon">✨</span>
+              <div>
+                <div className="inspect-ability-label">{legacyAbility.name || legacyAbility.trigger || 'Special Ability'}</div>
+                <div className="inspect-ability-desc">{legacyAbility.description}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Flavour / description text */}
+        {card.description && abilities.length === 0 && !legacyAbility && (
+          <div className="inspect-abilities">
+            <div className="inspect-ability">
+              <span className="inspect-ability-icon">✨</span>
+              <div>
+                <div className="inspect-ability-label">Ability</div>
+                <div className="inspect-ability-desc">{card.description}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!hasAnything && <p className="inspect-no-ability">No special abilities</p>}
+      </div>
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function ManaBar({ mana }) {
   return (
@@ -158,31 +256,56 @@ function Hero({ hero, playerIdx, isOpponent, isValidTarget, onClick, isCurrentPl
   );
 }
 
-function HandCard({ card, canPlay, onClick, isOpponent }) {
+function HandCard({ card, canPlay, onClick, isOpponent, onInspect }) {
   if (isOpponent) return <div className="hand-card hand-card--back" />;
+  const abilities = (card.abilities || []).filter(a => ABILITY_INFO[a]);
+  // For old-format cards with no abilities array, show description as a generic row
+  const legacyDesc = abilities.length === 0 && (card.description || card.specialAbility?.description);
+  const legacyName = abilities.length === 0 && card.specialAbility?.name;
+
   return (
     <div
       className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''}`}
       onClick={onClick}
+      onContextMenu={e => { e.preventDefault(); onInspect(card); }}
     >
       <div className="card-cost">{card.cost}</div>
       <div className="card-art">{card.type === 'SPELL' ? '✨' : getArt(card)}</div>
       <div className="card-name">{card.name}</div>
+
+      <div className="card-ability-rows">
+        {abilities.map(a => {
+          const info = ABILITY_INFO[a];
+          return (
+            <div key={a} className="card-ability-row">
+              <span className="card-ability-row-icon">{info.icon}</span>
+              <span className="card-ability-row-text"><strong>{info.label}:</strong> {info.desc}</span>
+            </div>
+          );
+        })}
+        {legacyDesc && (
+          <div className="card-ability-row">
+            <span className="card-ability-row-icon">✨</span>
+            <span className="card-ability-row-text">
+              {legacyName && <strong>{legacyName}: </strong>}
+              {legacyDesc}
+            </span>
+          </div>
+        )}
+      </div>
+
       {card.type === 'MINION' && (
         <div className="card-stats">
           <span className="card-attack">⚔{card.attack}</span>
           <span className="card-health">❤{card.health}</span>
         </div>
       )}
-      {card.description && <div className="card-desc">{card.description}</div>}
-      {card.abilities?.includes('taunt') && <div className="ability-badge taunt-badge">TAUNT</div>}
-      {card.abilities?.includes('divine_shield') && <div className="ability-badge divine-badge">DIVINE</div>}
-      {card.abilities?.includes('charge') && <div className="ability-badge charge-badge">CHARGE</div>}
     </div>
   );
 }
 
-function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, isLunging, isTakingHit, isNewlyPlayed }) {
+function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed }) {
+  const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
   return (
     <div
       data-minion-id={minion.id}
@@ -197,16 +320,25 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
         ${isNewlyPlayed    ? 'just-summoned'      : ''}
       `}
       onClick={onClick}
-      title={minion.description || minion.name}
+      onContextMenu={e => { e.preventDefault(); onInspect(minion); }}
     >
       {minion.hasDivineShield && <div className="divine-aura" />}
       <div className="minion-art">{getArt(minion)}</div>
       <div className="minion-name">{minion.name}</div>
+      {abilities.length > 0 && (
+        <div className="minion-ability-badges">
+          {abilities.map(a => (
+            <div key={a} className="minion-ability-badge">
+              <span className="minion-ability-badge-icon">{ABILITY_INFO[a].icon}</span>
+              <span className="minion-ability-badge-label">{ABILITY_INFO[a].label}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="minion-stats">
         <span className="stat-attack">⚔{minion.attack}</span>
         <span className={`stat-health ${minion.damaged ? 'damaged' : ''}`}>❤{minion.health}</span>
       </div>
-      {minion.abilities?.includes('taunt') && <div className="taunt-ring" />}
       {!canAttack && <div className="exhausted-overlay" />}
     </div>
   );
@@ -266,6 +398,7 @@ export default function GameBoard() {
   const [flashHeroes, setFlashHeroes] = useState(new Set());
   const [screenFlash, setScreenFlash] = useState(false);
   const [newlyPlayed, setNewlyPlayed] = useState(new Set());
+  const [inspectedCard, setInspectedCard] = useState(null);
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -461,7 +594,7 @@ export default function GameBoard() {
           {oppPlayer.board.map((minion, i) => (
             <BoardMinionCard key={minion.id} minion={minion} isSelected={false}
               isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i))}
-              canAttack={false} onClick={() => handleSelectMinion(opp, i)}
+              canAttack={false} onClick={() => handleSelectMinion(opp, i)} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
           ))}
           {oppPlayer.board.length === 0 && <div className="empty-board-hint opp-hint">Opponent's side</div>}
@@ -474,7 +607,7 @@ export default function GameBoard() {
             <BoardMinionCard key={minion.id} minion={minion}
               isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
-              canAttack={minion.canAttack} onClick={() => handleSelectMinion(cur, i)}
+              canAttack={minion.canAttack} onClick={() => handleSelectMinion(cur, i)} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}
@@ -492,7 +625,7 @@ export default function GameBoard() {
           {curPlayer.hand.map((card, i) => (
             <HandCard key={card.id} card={card}
               canPlay={curPlayer.mana.current >= card.cost && (card.type === 'SPELL' || curPlayer.board.length < 7)}
-              onClick={() => handlePlayCard(i)} isOpponent={false} />
+              onClick={() => handlePlayCard(i)} isOpponent={false} onInspect={setInspectedCard} />
           ))}
         </div>
       </div>
@@ -518,6 +651,7 @@ export default function GameBoard() {
 
       {state.log?.length > 0 && <div className="game-log">{state.log[0]}</div>}
       <AnimLayer anims={anims} deathGhosts={deathGhosts} screenFlash={screenFlash} />
+      {inspectedCard && <CardInspectModal card={inspectedCard} onClose={() => setInspectedCard(null)} />}
     </div>
   );
 }

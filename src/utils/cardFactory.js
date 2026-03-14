@@ -52,6 +52,18 @@ function pickPassive(skills = []) {
   return PASSIVE_MAP.default
 }
 
+const NEW_ABILITIES = [
+  ['battlecry_draw_1'],
+  ['rush'],
+  ['divine_shield'],
+  ['deathrattle_draw_1'],
+  ['battlecry_buff_friendly'],
+  ['deathrattle_summon_intern'],
+  [],
+  [],
+  [],
+]
+
 export function generateMockDeck(profile) {
   const { name = 'Unknown', title = '', company = '', skills = [], experiences = [] } = profile
 
@@ -67,8 +79,8 @@ export function generateMockDeck(profile) {
     const cost = Math.min(Math.max(1 + Math.floor(i / 3), 1), 7)
     const attack = 1 + Math.floor(Math.random() * 3) + seniorityBonus
     const hp = 2 + Math.floor(Math.random() * 4) + seniorityBonus
-    const ability = ABILITIES[Math.floor(Math.random() * ABILITIES.length)]
-    const rarity = ability === null ? 'common' : (Math.random() < 0.2 ? 'legendary' : 'rare')
+    const abilities = NEW_ABILITIES[Math.floor(Math.random() * NEW_ABILITIES.length)]
+    const rarity = abilities.length === 0 ? 'common' : (abilities.length === 2 ? 'legendary' : 'rare')
 
     cards.push({
       id: uid(),
@@ -78,11 +90,21 @@ export function generateMockDeck(profile) {
       cost,
       attack,
       hp,
-      currentHp: hp,
-      specialAbility: ability,
+      abilities,
+      abilityDescription: null,
       artGradient: ROLE_GRADIENTS[roleType] || ROLE_GRADIENTS.default,
       rarity,
     })
+  }
+
+  // Guarantee at least one taunt card
+  if (!cards.some(c => c.abilities.includes('taunt'))) {
+    const idx = cards.reduce((best, c, i) =>
+      Math.abs(c.cost - 3.5) < Math.abs(cards[best].cost - 3.5) ? i : best
+    , 0)
+    cards[idx].abilities = ['taunt', ...cards[idx].abilities.filter(a => a !== 'taunt')].slice(0, 2)
+    cards[idx].rarity = 'rare'
+    cards[idx].abilityDescription = 'A cornerstone role — stood firm and took every hit so the team could thrive.'
   }
 
   return { cards, passive: pickPassive(skills), ownerName: name }

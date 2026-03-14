@@ -270,6 +270,9 @@ export default function MainMenu() {
         </div>
       </Modal>
 
+      {/* ── Watermark ── */}
+      <p className={styles.watermark}>Created by Benediktas Meidus, Ben Cox, David Deng. 2026 SotonHack.</p>
+
       {/* ── Delete confirm ── */}
       <Modal open={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title="Delete deck?">
         <div className={styles.importForm}>

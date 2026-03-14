@@ -534,6 +534,20 @@
   flex-shrink: 0;
 }
 
+/* ── Watermark ── */
+.watermark {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  opacity: 0.45;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
 /* Responsive: stack on small screens */
 @media (max-width: 700px) {
   .layout { flex-direction: column; }

@@ -7,6 +7,8 @@ Basic React + Vite starter for your AI-generated LinkedIn deck game.
 ```bash
 npm install
 npm run dev
+open a second terminal
+npm run server 
 ```
 
 Open the local URL shown in terminal (usually `http://localhost:5173`).

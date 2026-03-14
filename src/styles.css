@@ -1874,6 +1874,17 @@ body {
   100% { box-shadow: 0 0 0px rgba(239,68,68,0); }
 }
 
+@keyframes fire-aura-pulse {
+  0%   { box-shadow: none; }
+  15%  { box-shadow: 0 0 60px rgba(249,115,22,1), 0 0 120px rgba(239,68,68,0.8), inset 0 0 80px rgba(249,115,22,0.5); }
+  50%  { box-shadow: 0 0 80px rgba(249,115,22,0.9), 0 0 160px rgba(239,68,68,0.6), inset 0 0 100px rgba(249,115,22,0.4); }
+  80%  { box-shadow: 0 0 40px rgba(249,115,22,0.5), 0 0 80px rgba(239,68,68,0.3), inset 0 0 50px rgba(249,115,22,0.2); }
+  100% { box-shadow: none; }
+}
+.opponent-fire-aura {
+  animation: fire-aura-pulse 1.5s ease-out forwards !important;
+}
+
 /* ── Impact particles ────────────────────────────────────────────────────── */
 .impact-main {
   display: block;
@@ -2304,6 +2315,324 @@ body {
   font-style: italic;
 }
 
+/* ── Mono Theme Overrides ────────────────────────────────────────────────── */
+:root[data-theme='mono'] .board-area {
+  background: radial-gradient(ellipse at 50% 50%, #171717 0%, #090909 100%);
+  border-top: 2px solid rgba(255,255,255,0.08);
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 6px 20px rgba(0,0,0,0.9), inset 0 -6px 20px rgba(0,0,0,0.9);
+}
+:root[data-theme='mono'] .board-hero-cup {
+  background: linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.8) 100%);
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.9), inset 0 2px 8px rgba(0,0,0,0.8);
+}
+:root[data-theme='mono'] .board-side {
+  background: linear-gradient(180deg, #040404 0%, #080808 40%, #080808 60%, #040404 100%);
+}
+:root[data-theme='mono'] .board-side::before { display: none; }
+:root[data-theme='mono'] .end-turn-zone {
+  background: linear-gradient(180deg, #040404 0%, #080808 40%, #080808 60%, #040404 100%);
+  border-image: linear-gradient(180deg, transparent, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.2) 70%, transparent) 1;
+  box-shadow: inset 8px 0 20px rgba(0,0,0,0.8), -4px 0 12px rgba(0,0,0,0.5);
+}
+:root[data-theme='mono'] .end-turn-btn {
+  background: linear-gradient(180deg, #2a2a2a, #181818 50%, #0f0f0f);
+  color: #f1f1f1;
+  border-color: #e0e0e0;
+  box-shadow: 0 0 20px rgba(255,255,255,0.12), 0 6px 16px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+:root[data-theme='mono'] .end-turn-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3a3a3a, #2a2a2a 50%, #1a1a1a);
+  box-shadow: 0 0 36px rgba(255,255,255,0.22), 0 8px 20px rgba(0,0,0,0.8);
+}
+:root[data-theme='mono'] .player-name-label {
+  background: rgba(5,5,5,0.85);
+  border-color: rgba(255,255,255,0.15);
+  color: #f1f1f1;
+}
+:root[data-theme='mono'] .sidebar-turn-label { color: #f1f1f1; }
+:root[data-theme='mono'] .board-minion {
+  background: linear-gradient(180deg, #1e1e1e, #111111);
+  border-color: #5a5a5a;
+}
+:root[data-theme='mono'] .board-minion .minion-name { color: #d4d4d4; }
+:root[data-theme='mono'] .mana-crystal.full {
+  background: linear-gradient(135deg, #e0e0e0, #9a9a9a);
+  box-shadow: 0 0 7px rgba(255,255,255,0.5);
+  border-color: #f5f5f5;
+}
+:root[data-theme='mono'] .mana-crystal.empty {
+  background: rgba(40,40,40,0.6);
+  border-color: rgba(255,255,255,0.1);
+}
+:root[data-theme='mono'] .mana-text { color: #d4d4d4; }
+:root[data-theme='mono'] .forfeit-btn {
+  background: rgba(10,10,10,0.9);
+  border-color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+}
+:root[data-theme='mono'] .forfeit-btn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.5);
+  color: #f1f1f1;
+  box-shadow: 0 0 18px rgba(255,255,255,0.15), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Mono: card overlay states */
+:root[data-theme='mono'] .board-minion.has-taunt {
+  border-color: #f1f1f1;
+  box-shadow: 0 0 0 2px #f1f1f1, 0 0 18px rgba(255,255,255,0.7), 0 0 36px rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.8);
+  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+}
+:root[data-theme='mono'] .taunt-shield {
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12));
+}
+:root[data-theme='mono'] .board-minion.has-taunt.can-attack {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 18px rgba(255,255,255,0.9), 0 0 36px rgba(255,255,255,0.4), 0 4px 12px rgba(0,0,0,0.8);
+}
+:root[data-theme='mono'] .board-minion.can-attack {
+  border-color: #f1f1f1;
+  box-shadow: 0 0 14px rgba(255,255,255,0.35), 0 4px 12px rgba(0,0,0,0.8);
+}
+:root[data-theme='mono'] .board-minion.can-attack:hover {
+  box-shadow: 0 0 20px rgba(255,255,255,0.65), 0 4px 12px rgba(0,0,0,0.8);
+}
+:root[data-theme='mono'] .divine-aura {
+  border-color: rgba(255,255,255,0.9);
+  box-shadow: 0 0 12px rgba(255,255,255,0.65), 0 0 28px rgba(255,255,255,0.3), inset 0 0 14px rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+:root[data-theme='mono'] .board-minion.valid-target {
+  border-color: #f5f5f5;
+  box-shadow: 0 0 16px rgba(255,255,255,0.55), 0 0 4px rgba(255,255,255,0.8);
+}
+:root[data-theme='mono'] .board-minion.has-taunt.valid-target {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 18px rgba(255,255,255,0.9), 0 0 36px rgba(255,255,255,0.4);
+}
+
+/* Mono: transition screen */
+:root[data-theme='mono'] .transition-screen {
+  background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%);
+}
+:root[data-theme='mono'] .transition-card {
+  background: linear-gradient(135deg, rgba(22,22,22,0.97), rgba(10,10,10,0.99));
+  border-color: rgba(255,255,255,0.3);
+  box-shadow: 0 0 40px rgba(255,255,255,0.07), 0 16px 48px rgba(0,0,0,0.9);
+}
+:root[data-theme='mono'] .gameover-card {
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 40px rgba(255,255,255,0.1), 0 16px 48px rgba(0,0,0,0.9);
+}
+:root[data-theme='mono'] .transition-player-name {
+  text-shadow: 0 0 16px rgba(255,255,255,0.25);
+}
+:root[data-theme='mono'] .gameover-title { color: #f1f1f1; }
+
+/* Mono: forfeit confirm dialog */
+:root[data-theme='mono'] .forfeit-confirm {
+  background: rgba(12,12,12,0.97);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 0 12px rgba(255,255,255,0.08);
+}
+:root[data-theme='mono'] .forfeit-confirm span { color: #e0e0e0; }
+:root[data-theme='mono'] .forfeit-no {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.2);
+  color: #d4d4d4;
+}
+:root[data-theme='mono'] .forfeit-no:hover { background: rgba(255,255,255,0.12); }
+
+/* Mono: game over screen */
+:root[data-theme='mono'] .gameover-screen {
+  background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%);
+}
+:root[data-theme='mono'] .go-loser-avatar {
+  border-color: #8f8f8f;
+  background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
+  color: #a0a0a0;
+  box-shadow: 0 0 40px rgba(180,180,180,0.2);
+  animation: none;
+}
+:root[data-theme='mono'] .go-loser-name { color: #a0a0a0; }
+:root[data-theme='mono'] .go-winner-avatar {
+  border-color: #f1f1f1;
+  background: linear-gradient(135deg, #1e1e1e, #2c2c2c);
+  color: #f1f1f1;
+  box-shadow: 0 0 50px rgba(255,255,255,0.35), 0 0 100px rgba(255,255,255,0.1);
+}
+:root[data-theme='mono'] .go-winner-name {
+  color: #f1f1f1;
+  text-shadow: 0 0 30px rgba(255,255,255,0.35), 0 0 60px rgba(255,255,255,0.12);
+}
+:root[data-theme='mono'] .go-winner-title { color: #d4d4d4; }
+:root[data-theme='mono'] .go-trophy {
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.6));
+}
+:root[data-theme='mono'] .go-forfeit-note { color: rgba(220,220,220,0.5); }
+
+/* ── Rune Theme Overrides ────────────────────────────────────────────────── */
+:root[data-theme='rune'] .board-area {
+  background:
+    /* Theme colour overlay — cool dark amber tint */
+    linear-gradient(180deg, rgba(10,8,2,0.55) 0%, rgba(20,15,4,0.42) 50%, rgba(10,8,2,0.55) 100%),
+    /* Edge vignette */
+    radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 100%),
+    /* Stone floor texture, stretched to fill */
+    url('./images/StoneFloorTexture.jpg') center/100% 100% no-repeat;
+  border-top: 2px solid rgba(242,201,76,0.35);
+  border-bottom: 2px solid rgba(242,201,76,0.35);
+  box-shadow: inset 0 6px 20px rgba(0,0,0,0.55), inset 0 -6px 20px rgba(0,0,0,0.55);
+}
+:root[data-theme='rune'] .board-hero-cup {
+  background: linear-gradient(180deg, rgba(65,65,65,0.9) 0%, rgba(40,40,40,0.8) 100%);
+  border-color: rgba(242,201,76,0.75);
+  box-shadow: 0 0 0 2px rgba(242,201,76,0.25), 0 4px 16px rgba(0,0,0,0.7), inset 0 2px 8px rgba(0,0,0,0.5);
+}
+:root[data-theme='rune'] .board-side {
+  background: linear-gradient(180deg, #181818 0%, #222222 40%, #222222 60%, #181818 100%);
+}
+:root[data-theme='rune'] .board-side::before { display: none; }
+:root[data-theme='rune'] .end-turn-zone {
+  background: linear-gradient(180deg, #181818 0%, #222222 40%, #222222 60%, #181818 100%);
+  border-image: linear-gradient(180deg, transparent, rgba(242,201,76,0.5) 30%, rgba(242,201,76,0.7) 50%, rgba(242,201,76,0.5) 70%, transparent) 1;
+  box-shadow: inset 8px 0 20px rgba(0,0,0,0.6), -4px 0 12px rgba(0,0,0,0.5);
+}
+:root[data-theme='rune'] .end-turn-btn {
+  background: linear-gradient(180deg, #e8b84b, #c49a1f 50%, #a07d10);
+  color: #1b1b1b;
+  border-color: #f2c94c;
+  box-shadow: 0 0 20px rgba(242,201,76,0.45), 0 6px 16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,221,119,0.3);
+}
+:root[data-theme='rune'] .end-turn-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f2c94c, #e8b84b 50%, #c49a1f);
+  box-shadow: 0 0 36px rgba(242,201,76,0.75), 0 8px 20px rgba(0,0,0,0.6);
+}
+:root[data-theme='rune'] .player-name-label {
+  background: rgba(20,20,20,0.8);
+  border-color: rgba(242,201,76,0.3);
+  color: #f6f2e8;
+}
+:root[data-theme='rune'] .sidebar-turn-label { color: #f2c94c; }
+:root[data-theme='rune'] .board-minion {
+  background: linear-gradient(180deg, #4a4a4a, #333333);
+  border-color: #c49a1f;
+}
+:root[data-theme='rune'] .board-minion .minion-name { color: #f6f2e8; }
+:root[data-theme='rune'] .mana-crystal.full {
+  background: linear-gradient(135deg, #f2c94c, #c49a1f);
+  box-shadow: 0 0 7px rgba(242,201,76,0.65);
+  border-color: #ffd777;
+}
+:root[data-theme='rune'] .mana-crystal.empty {
+  background: rgba(50,50,50,0.6);
+  border-color: rgba(242,201,76,0.15);
+}
+:root[data-theme='rune'] .mana-text { color: #f2c94c; }
+:root[data-theme='rune'] .forfeit-btn {
+  background: rgba(20,20,20,0.9);
+  border-color: rgba(242,201,76,0.3);
+  color: rgba(242,201,76,0.7);
+}
+:root[data-theme='rune'] .forfeit-btn:hover {
+  background: rgba(204,16,22,0.1);
+  border-color: rgba(239,68,68,0.7);
+  color: #ef4444;
+  box-shadow: 0 0 18px rgba(239,68,68,0.35), 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Rune: card overlay states */
+:root[data-theme='rune'] .board-minion.has-taunt {
+  border-color: #f2c94c;
+  box-shadow: 0 0 0 2px #f2c94c, 0 0 18px rgba(242,201,76,0.8), 0 0 36px rgba(242,201,76,0.35), 0 4px 12px rgba(0,0,0,0.7);
+  background: linear-gradient(180deg, #545454, #3d3d3d);
+}
+:root[data-theme='rune'] .taunt-shield {
+  background: linear-gradient(180deg, rgba(242,201,76,0.45), rgba(196,154,31,0.25));
+}
+:root[data-theme='rune'] .board-minion.has-taunt.can-attack {
+  box-shadow: 0 0 0 2px #ffd777, 0 0 18px rgba(242,201,76,0.9), 0 0 36px rgba(255,215,119,0.5), 0 4px 12px rgba(0,0,0,0.7);
+}
+:root[data-theme='rune'] .board-minion.can-attack {
+  border-color: #f2c94c;
+  box-shadow: 0 0 14px rgba(242,201,76,0.55), 0 4px 12px rgba(0,0,0,0.7);
+}
+:root[data-theme='rune'] .board-minion.can-attack:hover {
+  box-shadow: 0 0 20px rgba(242,201,76,0.85), 0 4px 12px rgba(0,0,0,0.7);
+}
+:root[data-theme='rune'] .divine-aura {
+  border-color: rgba(242,201,76,0.9);
+  box-shadow: 0 0 12px rgba(242,201,76,0.7), 0 0 28px rgba(242,201,76,0.35), inset 0 0 14px rgba(242,201,76,0.1);
+  background: rgba(242,201,76,0.05);
+}
+:root[data-theme='rune'] .board-minion.valid-target {
+  border-color: #f2c94c;
+  box-shadow: 0 0 16px rgba(242,201,76,0.65), 0 0 4px rgba(242,201,76,0.9);
+}
+:root[data-theme='rune'] .board-minion.has-taunt.valid-target {
+  box-shadow: 0 0 0 2px #ffd777, 0 0 18px rgba(242,201,76,0.9), 0 0 36px rgba(242,201,76,0.5);
+}
+
+/* Rune: transition screen */
+:root[data-theme='rune'] .transition-screen {
+  background: radial-gradient(ellipse at center, #2c2c2c 0%, #161616 100%);
+}
+:root[data-theme='rune'] .transition-card {
+  background: linear-gradient(135deg, rgba(55,55,55,0.97), rgba(35,35,35,0.99));
+  border-color: rgba(242,201,76,0.6);
+  box-shadow: 0 0 40px rgba(242,201,76,0.12), 0 16px 48px rgba(0,0,0,0.8);
+}
+:root[data-theme='rune'] .gameover-card {
+  border-color: #f2c94c;
+  box-shadow: 0 0 40px rgba(242,201,76,0.25), 0 16px 48px rgba(0,0,0,0.8);
+}
+:root[data-theme='rune'] .transition-player-name {
+  text-shadow: 0 0 16px rgba(242,201,76,0.4);
+}
+:root[data-theme='rune'] .gameover-title { color: #f2c94c; }
+
+/* Rune: forfeit confirm dialog */
+:root[data-theme='rune'] .forfeit-confirm {
+  background: rgba(28,28,28,0.97);
+  border-color: rgba(242,201,76,0.45);
+  box-shadow: 0 0 12px rgba(242,201,76,0.12);
+}
+:root[data-theme='rune'] .forfeit-confirm span { color: #f6f2e8; }
+:root[data-theme='rune'] .forfeit-no {
+  background: rgba(242,201,76,0.06);
+  border-color: rgba(242,201,76,0.25);
+  color: #bfb7a3;
+}
+:root[data-theme='rune'] .forfeit-no:hover { background: rgba(242,201,76,0.12); }
+
+/* Rune: game over screen */
+:root[data-theme='rune'] .gameover-screen {
+  background: radial-gradient(ellipse at center, #2c2c2c 0%, #161616 100%);
+}
+:root[data-theme='rune'] .go-loser-avatar {
+  border-color: #c49a1f;
+  background: linear-gradient(135deg, #333333, #4a4a4a);
+  color: #c49a1f;
+  box-shadow: 0 0 40px rgba(196,154,31,0.4);
+  animation: none;
+}
+:root[data-theme='rune'] .go-loser-name { color: #bfb7a3; }
+:root[data-theme='rune'] .go-winner-avatar {
+  border-color: #f2c94c;
+  background: linear-gradient(135deg, #333333, #4a4a4a);
+  color: #ffd777;
+  box-shadow: 0 0 50px rgba(242,201,76,0.55), 0 0 100px rgba(242,201,76,0.2);
+}
+:root[data-theme='rune'] .go-winner-name {
+  color: #ffd777;
+  text-shadow: 0 0 30px rgba(242,201,76,0.65), 0 0 60px rgba(242,201,76,0.25);
+}
+:root[data-theme='rune'] .go-winner-title { color: #f2c94c; }
+:root[data-theme='rune'] .go-trophy {
+  filter: drop-shadow(0 0 20px rgba(242,201,76,0.8));
+}
+:root[data-theme='rune'] .go-forfeit-note { color: rgba(242,201,76,0.55); }
+
 /* ── Light Theme Overrides ───────────────────────────────────────────────── */
 :root[data-theme='light'] .board-side {
   background: linear-gradient(180deg, #b8862a 0%, #d4a43a 40%, #d4a43a 60%, #b8862a 100%);
@@ -2518,120 +2847,196 @@ body {
 }
 
 /* ── LinkedIn theme overrides ─────────────────────────────────────────────── */
-[data-theme='linkedin'] .board-area {
+:root[data-theme='linkedin'] .board-area {
   background: #f3f2ef;
   border-top: 2px solid rgba(10,102,194,0.35);
   border-bottom: 2px solid rgba(10,102,194,0.35);
 }
-[data-theme='linkedin'] .board-hero-cup {
+:root[data-theme='linkedin'] .board-hero-cup {
   background:
     linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(220,230,241,0.6) 100%),
     url('./images/linkedin-texture.svg') center/300px auto no-repeat;
   border-color: rgba(10,102,194,0.6);
   border: 2px solid rgba(10,102,194,0.3); /* Replacing the 0 0 0 2px box-shadow */
 }
-[data-theme='linkedin'] .opponent-row {
+:root[data-theme='linkedin'] .opponent-row {
   background: none;
 }
-[data-theme='linkedin'] .player-row {
+:root[data-theme='linkedin'] .player-row {
   background: none;
 }
-[data-theme='linkedin'] .board-side {
+:root[data-theme='linkedin'] .board-side {
   background: #e8f0fb;
   border-color: rgba(10,102,194,0.25);
 }
-[data-theme='linkedin'] .board-side::before {
+:root[data-theme='linkedin'] .board-side::before {
   display: none;
 }
-[data-theme='linkedin'] .opponent-area {
+:root[data-theme='linkedin'] .opponent-area {
   background: none;
   box-shadow: none;
 }
-[data-theme='linkedin'] .current-area {
+:root[data-theme='linkedin'] .current-area {
   background: none;
   box-shadow: none;
 }
-[data-theme='linkedin'] .end-turn-zone {
+:root[data-theme='linkedin'] .end-turn-zone {
   background: linear-gradient(180deg, #e1ecf7, #cddcef);
   border-color: rgba(10,102,194,0.25);
 }
-[data-theme='linkedin'] .end-turn-btn {
+:root[data-theme='linkedin'] .end-turn-btn {
   background: linear-gradient(180deg, #0a66c2, #004182);
   border-color: #378fe9;
   color: #ffffff;
 }
-[data-theme='linkedin'] .end-turn-btn:hover:not(:disabled) {
+:root[data-theme='linkedin'] .end-turn-btn:hover:not(:disabled) {
   background: linear-gradient(180deg, #378fe9, #0a66c2);
 }
-[data-theme='linkedin'] .hand-card {
+:root[data-theme='linkedin'] .hand-card {
   background: linear-gradient(180deg, #ffffff 0%, #f3f2ef 100%);
   border-color: #0a66c2;
 }
-[data-theme='linkedin'] .hand-card .card-name {
+:root[data-theme='linkedin'] .hand-card .card-name {
   color: #191919;
 }
-[data-theme='linkedin'] .board-minion {
+:root[data-theme='linkedin'] .board-minion {
   background: linear-gradient(180deg, #e1ecf7, #cddcef);
   border-color: #0a66c2;
 }
-[data-theme='linkedin'] .board-minion .minion-name {
+:root[data-theme='linkedin'] .board-minion .minion-name {
   color: #191919;
 }
-[data-theme='linkedin'] .mana-pip.filled {
-  background: #0a66c2;
-  border-color: #378fe9;
+:root[data-theme='linkedin'] .mana-crystal.full {
+  background: linear-gradient(135deg, #378fe9, #0a66c2);
+  box-shadow: 0 0 7px rgba(10,102,194,0.6);
+  border-color: #56a8f5;
 }
-[data-theme='linkedin'] .mana-pip.empty {
-  background: #c0d2e8;
-  border-color: #a0b8d0;
+:root[data-theme='linkedin'] .mana-crystal.empty {
+  background: rgba(10,102,194,0.12);
+  border-color: rgba(10,102,194,0.25);
 }
-[data-theme='linkedin'] .player-name-label {
+:root[data-theme='linkedin'] .mana-text { color: #0a66c2; }
+:root[data-theme='linkedin'] .player-name-label {
   background: rgba(10,102,194,0.85);
   border-color: rgba(55,143,233,0.4);
   color: #ffffff;
 }
-[data-theme='linkedin'] .sidebar-turn-label {
+:root[data-theme='linkedin'] .sidebar-turn-label {
   color: #0a66c2;
 }
-[data-theme='linkedin'] .forfeit-btn {
+:root[data-theme='linkedin'] .forfeit-btn {
   background: rgba(255,255,255,0.9);
   border-color: rgba(10,102,194,0.3);
   color: #666666;
 }
-[data-theme='linkedin'] .forfeit-btn:hover {
+:root[data-theme='linkedin'] .forfeit-btn:hover {
   background: rgba(204,16,22,0.1);
   border-color: #cc1016;
   color: #cc1016;
 }
-[data-theme='linkedin'] .setup-screen {
+:root[data-theme='linkedin'] .setup-screen {
   background: radial-gradient(ellipse at center, #f3f2ef 0%, #e8e4df 100%);
 }
 
-/* Remove all drop/box shadows for a flatter, cleaner LinkedIn style */
-[data-theme='linkedin'] *,
-[data-theme='linkedin'] *::before,
-[data-theme='linkedin'] *::after {
-  box-shadow: none !important;
+/* ── LinkedIn: card overlay states ── */
+:root[data-theme='linkedin'] .board-minion.has-taunt {
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 2px #0a66c2, 0 0 18px rgba(10,102,194,0.7), 0 0 36px rgba(10,102,194,0.35), 0 4px 12px rgba(0,0,0,0.2);
+  background: linear-gradient(180deg, #dce6f1, #c8d8ea);
+}
+:root[data-theme='linkedin'] .taunt-shield {
+  background: linear-gradient(180deg, rgba(10,102,194,0.35), rgba(10,102,194,0.18));
+}
+:root[data-theme='linkedin'] .board-minion.has-taunt.can-attack {
+  box-shadow: 0 0 0 2px #378fe9, 0 0 18px rgba(55,143,233,0.7), 0 0 36px rgba(55,143,233,0.4), 0 4px 12px rgba(0,0,0,0.2);
+}
+:root[data-theme='linkedin'] .board-minion.can-attack {
+  border-color: #0a66c2;
+  box-shadow: 0 0 14px rgba(10,102,194,0.5), 0 4px 12px rgba(0,0,0,0.2);
+}
+:root[data-theme='linkedin'] .board-minion.can-attack:hover {
+  box-shadow: 0 0 20px rgba(10,102,194,0.8), 0 4px 12px rgba(0,0,0,0.2);
+}
+:root[data-theme='linkedin'] .divine-aura {
+  border-color: rgba(10,102,194,1);
+  box-shadow:
+    0 0 12px rgba(10,102,194,0.7),
+    0 0 28px rgba(10,102,194,0.4),
+    inset 0 0 14px rgba(10,102,194,0.15);
+  background: rgba(10,102,194,0.06);
+}
+:root[data-theme='linkedin'] .board-minion.valid-target {
+  border-color: #cc1016;
+  box-shadow: 0 0 16px rgba(204,16,22,0.7), 0 0 4px rgba(204,16,22,0.9);
+}
+:root[data-theme='linkedin'] .board-minion.has-taunt.valid-target {
+  box-shadow: 0 0 0 2px #cc1016, 0 0 18px rgba(204,16,22,0.9), 0 0 36px rgba(204,16,22,0.5);
 }
 
-[data-theme='linkedin'] .impact-main,
-[data-theme='linkedin'] .death-center,
-[data-theme='linkedin'] .death-ghost-art {
-  filter: none !important;
+/* ── LinkedIn: transition screen ── */
+:root[data-theme='linkedin'] .transition-screen {
+  background: radial-gradient(ellipse at center, #f3f2ef 0%, #e8e4df 100%);
+}
+:root[data-theme='linkedin'] .transition-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(241,246,251,0.99));
+  border-color: #0a66c2;
+  box-shadow: 0 0 40px rgba(10,102,194,0.15), 0 16px 48px rgba(0,0,0,0.12);
+}
+:root[data-theme='linkedin'] .transition-player-name {
+  text-shadow: 0 0 16px rgba(10,102,194,0.3);
+}
+:root[data-theme='linkedin'] .gameover-title {
+  color: #0a66c2;
 }
 
-/* Restore grayscale for exhausted minions on player's side */
-[data-theme='linkedin'] .player-row .exhausted {
-  filter: grayscale(1) !important;
+/* ── LinkedIn: forfeit confirm dialog ── */
+:root[data-theme='linkedin'] .forfeit-confirm {
+  background: rgba(255,255,255,0.97);
+  border-color: #cc1016;
+  box-shadow: 0 0 12px rgba(204,16,22,0.2);
+}
+:root[data-theme='linkedin'] .forfeit-confirm span {
+  color: #cc1016;
+}
+:root[data-theme='linkedin'] .forfeit-no {
+  background: rgba(10,102,194,0.06);
+  border-color: rgba(10,102,194,0.3);
+  color: #191919;
+}
+:root[data-theme='linkedin'] .forfeit-no:hover {
+  background: rgba(10,102,194,0.12);
 }
 
-/* Ensure enemy minions always have full color in linkedin theme */
-[data-theme='linkedin'] .opponent-row .exhausted {
-  filter: none !important;
+/* ── LinkedIn: game over screen ── */
+:root[data-theme='linkedin'] .gameover-screen {
+  background: radial-gradient(ellipse at center, #f3f2ef 0%, #e8e4df 100%);
 }
-
-[data-theme='linkedin'] .opponent-row .exhausted-overlay {
-  display: none !important;
+:root[data-theme='linkedin'] .go-loser-avatar {
+  background: linear-gradient(135deg, #e1ecf7, #cddcef);
+  color: #cc1016;
+  box-shadow: 0 0 40px rgba(204,16,22,0.4);
+}
+:root[data-theme='linkedin'] .go-loser-name {
+  color: #cc1016;
+}
+:root[data-theme='linkedin'] .go-winner-avatar {
+  border-color: #0a66c2;
+  background: linear-gradient(135deg, #e1ecf7, #cddcef);
+  color: #0a66c2;
+  box-shadow: 0 0 50px rgba(10,102,194,0.5), 0 0 100px rgba(10,102,194,0.2);
+}
+:root[data-theme='linkedin'] .go-winner-name {
+  color: #0a66c2;
+  text-shadow: 0 0 30px rgba(10,102,194,0.5), 0 0 60px rgba(10,102,194,0.2);
+}
+:root[data-theme='linkedin'] .go-winner-title {
+  color: #0a66c2;
+}
+:root[data-theme='linkedin'] .go-trophy {
+  filter: drop-shadow(0 0 20px rgba(10,102,194,0.7));
+}
+:root[data-theme='linkedin'] .go-forfeit-note {
+  color: rgba(204,16,22,0.7);
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */

@@ -301,7 +301,7 @@ function Hero({ hero, playerIdx, isOpponent, isValidTarget, isTauntBlocked, onCl
   );
 }
 
-function HandCard({ card, canPlay, onClick, isOpponent, onInspect }) {
+function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect }) {
   if (isOpponent) return <div className="hand-card hand-card--back" />;
   const abilities = (card.abilities || []).filter(a => ABILITY_INFO[a]);
   // For old-format cards with no abilities array, show description as a generic row
@@ -310,7 +310,7 @@ function HandCard({ card, canPlay, onClick, isOpponent, onInspect }) {
 
   return (
     <div
-      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''}`}
+      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''} ${cantAfford ? 'cant-afford' : ''}`}
       onClick={onClick}
       onContextMenu={e => { e.preventDefault(); onInspect(card); }}
     >
@@ -447,6 +447,7 @@ export default function GameBoard() {
   const [screenFlash, setScreenFlash] = useState(false);
   const [newlyPlayed, setNewlyPlayed] = useState(new Set());
   const [inspectedCard, setInspectedCard] = useState(null);
+  const [cantAffordId, setCantAffordId] = useState(null);
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -535,6 +536,12 @@ export default function GameBoard() {
   const handlePlayCard = useCallback((cardIdx) => {
     const card = state.players[cur].hand[cardIdx];
     if (!card) return;
+    // Not enough mana — show indicator and bail
+    if (state.players[cur].mana.current < card.cost) {
+      setCantAffordId(card.id);
+      setTimeout(() => setCantAffordId(null), 600);
+      return;
+    }
     const { state: ns } = playCard(state, cardIdx);
     if (card.type === 'MINION') {
       const newMinion = ns.players[cur].board[ns.players[cur].board.length - 1];
@@ -692,6 +699,7 @@ export default function GameBoard() {
           {curPlayer.hand.map((card, i) => (
             <HandCard key={card.id} card={card}
               canPlay={curPlayer.mana.current >= card.cost && (card.type === 'SPELL' || curPlayer.board.length < 7)}
+              cantAfford={cantAffordId === card.id}
               onClick={() => handlePlayCard(i)} isOpponent={false} onInspect={setInspectedCard} />
           ))}
         </div>

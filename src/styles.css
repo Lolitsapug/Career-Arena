@@ -568,6 +568,23 @@ body {
   border-color: #22c55e;
   box-shadow: 0 0 14px rgba(34,197,94,0.5), 0 4px 12px rgba(0,0,0,0.6);
 }
+@keyframes cant-afford-shake {
+  0%   { transform: translateX(0);   }
+  20%  { transform: translateX(-7px); }
+  40%  { transform: translateX(7px);  }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(4px);  }
+  100% { transform: translateX(0);   }
+}
+.hand-card.cant-afford {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 18px rgba(239,68,68,0.7), 0 4px 12px rgba(0,0,0,0.6) !important;
+  animation: cant-afford-shake 0.5s ease;
+}
+.hand-card.cant-afford .card-cost {
+  background: #ef4444;
+  color: #fff;
+}
 .hand-card.spell-card {
   background: linear-gradient(180deg, #e0d6f0, #c4b5e8);
   border-color: #7c3aed;

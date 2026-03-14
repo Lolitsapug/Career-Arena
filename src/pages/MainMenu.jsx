@@ -298,7 +298,13 @@ function PlayerSlot({ num, deck, onPick, onClear }) {
           <Avatar name={deck.ownerName} size={44} imageUrl={deck.profileMeta?.profilePictureUrl} />
           <div className={styles.slotDeckInfo}>
             <span className={styles.slotName}>{deck.ownerName}</span>
-            <span className={styles.slotMeta}>{deck.cards?.length ?? 0} cards · {deck.passive?.name ?? ''}</span>
+            <span className={styles.slotMeta}>{deck.cards?.length ?? 0} cards</span>
+            {deck.passive && (
+              <div className={styles.passiveWidget}>
+                <span className={styles.passiveWidgetName}>⚡ {deck.passive.name}</span>
+                <span className={styles.passiveWidgetDesc}>{deck.passive.description}</span>
+              </div>
+            )}
           </div>
           <button className={styles.slotClear} onClick={onClear} title="Remove">✕</button>
         </div>

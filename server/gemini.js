@@ -57,17 +57,23 @@ SPELL VALID ABILITIES (use ONLY these exact strings):
 - "spell_draw_2"             — Draw 2 cards. Use for research sprints or learning sabbaticals.
 
 RULES FOR PASSIVE:
-- Pick the player's most prominent skill and turn it into a passive game bonus
-- name: short memorable name (e.g. "Leadership Aura")
-- description: one sentence game effect (e.g. "All your minions start with +1 Attack.")
+- Pick the passive that best matches the player's most prominent skill/career theme.
+- You MUST choose EXACTLY ONE key from this list — no other values are allowed:
+  - "leadership"    → Leadership Aura      — All your cards gain +1 ATK at game start.
+  - "communication" → Network Effect       — Draw an extra card each turn.
+  - "management"    → Resource Allocation  — Start with 2 extra mana crystals.
+  - "engineering"   → Optimization         — Your cards cost 1 less mana (min 1).
+  - "design"        → Creative Vision      — Your first card each turn costs 0.
+  - "sales"         → Persuasion           — Enemy field cards have -1 ATK.
+  - "default"       → Veteran Presence     — Start the game with +5 Hero HP.
+- Return ONLY the key string in the "key" field (e.g. "engineering").
 
 Respond ONLY with valid JSON, no markdown, no explanation. Schema:
 
 {
   "ownerName": "string",
   "passive": {
-    "name": "string",
-    "description": "string"
+    "key": "leadership" | "communication" | "management" | "engineering" | "design" | "sales" | "default"
   },
   "cards": [
     {
@@ -130,6 +136,20 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
   }
 
   if (!deck.cards || !Array.isArray(deck.cards)) throw new Error('Gemini response missing cards array')
+
+  // Normalize passive: map the key Gemini returned to the predefined name/description
+  const PASSIVE_MAP = {
+    leadership:    { name: 'Leadership Aura',    description: 'All your cards gain +1 ATK at game start.' },
+    communication: { name: 'Network Effect',     description: 'Draw an extra card each turn.' },
+    management:    { name: 'Resource Allocation',description: 'Start with 2 extra mana crystals.' },
+    engineering:   { name: 'Optimization',       description: 'Your cards cost 1 less mana (min 1).' },
+    design:        { name: 'Creative Vision',    description: 'Your first card each turn costs 0.' },
+    sales:         { name: 'Persuasion',         description: 'Enemy field cards have -1 ATK.' },
+    default:       { name: 'Veteran Presence',   description: 'Start the game with +5 Hero HP.' },
+  }
+  const rawPassiveKey = (deck.passive?.key || deck.passive?.name || '').toLowerCase().trim()
+  const resolvedKey = Object.keys(PASSIVE_MAP).find(k => rawPassiveKey.includes(k)) ?? 'default'
+  deck.passive = { key: resolvedKey, ...PASSIVE_MAP[resolvedKey] }
 
   // Always use the name scraped directly from the page — Gemini sometimes makes one up
   if (scrapedName) deck.ownerName = scrapedName

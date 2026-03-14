@@ -267,9 +267,9 @@ function ManaBar({ mana }) {
   );
 }
 
-function DeckCounter({ count }) {
+function DeckCounter({ count, isPlayer }) {
   return (
-    <div className="deck-counter">
+    <div className="deck-counter" data-deck={isPlayer ? 'player' : 'opponent'}>
       <div className="deck-icon">🂠</div>
       <span>{count}</span>
     </div>
@@ -449,6 +449,7 @@ export default function GameBoard() {
   const [inspectedCard, setInspectedCard] = useState(null);
   const [cantAffordId, setCantAffordId] = useState(null);
   const [buffedIds, setBuffedIds] = useState(new Set());
+  const [drawAnims, setDrawAnims] = useState([]); // [{id, delay}]
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -486,6 +487,27 @@ export default function GameBoard() {
       ids.forEach(id => n.delete(id));
       return n;
     }), 800);
+  }
+
+  function triggerDrawAnimation(count) {
+    // Spawn `count` card-back tokens flying from deck to hand
+    const deckEl = document.querySelector('[data-deck="player"]');
+    const handEl = document.querySelector('.player-hand');
+    if (!deckEl || !handEl) return;
+    const deckRect  = deckEl.getBoundingClientRect();
+    const handRect  = handEl.getBoundingClientRect();
+    const startX = deckRect.left + deckRect.width / 2;
+    const startY = deckRect.top  + deckRect.height / 2;
+    const endX   = handRect.left + handRect.width  / 2;
+    const endY   = handRect.top  + handRect.height / 2;
+    for (let i = 0; i < count; i++) {
+      const id = makeId();
+      const delay = i * 180;
+      setTimeout(() => {
+        setDrawAnims(prev => [...prev, { id, startX, startY, endX, endY }]);
+        setTimeout(() => setDrawAnims(prev => prev.filter(a => a.id !== id)), 700);
+      }, delay);
+    }
   }
 
   function triggerAttack(curState, nextState, startPos, endPos, atkType, damage, isHero, oppIdx) {
@@ -576,6 +598,10 @@ export default function GameBoard() {
       }
       // Flash any minions that got buffed by a battlecry
       flashBuffedMinions(state, ns, cur);
+      // Animate drawn cards
+      const abs = card.abilities || [];
+      const drawCount = abs.includes('battlecry_draw_2') ? 2 : abs.includes('battlecry_draw_1') ? 1 : 0;
+      if (drawCount > 0) setTimeout(() => triggerDrawAnimation(drawCount), 200);
     }
     setState(ns);
   }, [state, cur]);
@@ -634,6 +660,9 @@ export default function GameBoard() {
     const defPos = getCenter(document.querySelector(`[data-minion-id="${defender.id}"]`));
     const ns = attackTarget(state, 'enemy_minion', boardIdx);
     triggerAttack(state, ns, atkPos, defPos, getAttackType(attacker), attacker.attack, false, opp);
+    // Animate cards drawn by deathrattles that fired during this attack
+    const drawnCards = ns.players[cur].hand.length - state.players[cur].hand.length;
+    if (drawnCards > 0) setTimeout(() => triggerDrawAnimation(drawnCards), 400);
     setState(ns);
   }, [state, cur, opp]);
 
@@ -669,10 +698,11 @@ export default function GameBoard() {
 
   return (
     <div className="game-board">
+      <div className="board-side board-side--left" />
       <div className="player-area opponent-area">
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
-            <DeckCounter count={oppPlayer.deck.length} />
+            <DeckCounter count={oppPlayer.deck.length} isPlayer={false} />
             <div className="opp-mana-info">
               <div className="mana-crystal full" style={{ opacity: 0.5 }} />
               <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
@@ -699,7 +729,11 @@ export default function GameBoard() {
           {oppPlayer.board.length === 0 && <div className="empty-board-hint opp-hint">Opponent's side</div>}
         </div>
 
-        <div className="board-divider"><div className="rope" /></div>
+        <div className="board-divider">
+          <div className="rope">
+            <span className="rope-icon">⚔</span>
+          </div>
+        </div>
 
         <div className="minion-row player-row">
           {curPlayer.board.map((minion, i) => (
@@ -721,7 +755,7 @@ export default function GameBoard() {
           <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
             onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
           <div className="hero-side-info hero-side-info--right">
-            <DeckCounter count={curPlayer.deck.length} />
+            <DeckCounter count={curPlayer.deck.length} isPlayer={true} />
           </div>
         </div>
         <div className="hand-zone player-hand">
@@ -762,6 +796,18 @@ export default function GameBoard() {
       {state.log?.length > 0 && <div className="game-log">{state.log[0]}</div>}
       <AnimLayer anims={anims} deathGhosts={deathGhosts} screenFlash={screenFlash} />
       {inspectedCard && <CardInspectModal card={inspectedCard} onClose={() => setInspectedCard(null)} />}
+
+      {/* Draw card animations — card backs flying from deck to hand */}
+      {drawAnims.map(a => (
+        <div key={a.id} className="draw-card-anim" style={{
+          '--start-x': `${a.startX}px`,
+          '--start-y': `${a.startY}px`,
+          '--end-x':   `${a.endX}px`,
+          '--end-y':   `${a.endY}px`,
+          left: a.startX,
+          top:  a.startY,
+        }} />
+      ))}
     </div>
   );
 }

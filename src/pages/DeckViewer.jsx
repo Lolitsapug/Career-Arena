@@ -5,19 +5,24 @@ import { useDeckStore } from '../store/deckStore'
 import styles from './DeckViewer.module.css'
 
 const ABILITY_LABELS = {
-  taunt:                      { label: 'Taunt',        icon: '🛡️', desc: 'Must be attacked first. Protects other minions and your hero.' },
-  divine_shield:              { label: 'Divine Shield', icon: '✨', desc: 'Absorbs the first source of damage, removing the shield.' },
-  rush:                       { label: 'Rush',          icon: '⚡', desc: 'Can attack enemy minions immediately when played.' },
-  charge:                     { label: 'Charge',        icon: '💨', desc: 'Can attack immediately, including the enemy hero.' },
-  battlecry_draw_1:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 1 card.' },
-  battlecry_draw_2:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 2 cards.' },
-  battlecry_aoe_1:            { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 1 damage to all enemies.' },
-  battlecry_aoe_2:            { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 2 damage to all enemies.' },
-  battlecry_buff_friendly:    { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
-  battlecry_buff_all_1:       { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
-  battlecry_buff_all_2:       { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +2/+2.' },
-  deathrattle_draw_1:         { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Draw 1 card.' },
-  deathrattle_summon_intern:  { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
+  taunt:                      { label: 'Taunt',          icon: '🛡️', desc: 'Must be attacked first. Protects other minions and your hero.' },
+  divine_shield:              { label: 'Divine Shield',  icon: '✨', desc: 'Absorbs the first source of damage, removing the shield.' },
+  rush:                       { label: 'Rush',            icon: '⚡', desc: 'Can attack enemy minions immediately when played.' },
+  charge:                     { label: 'Charge',          icon: '💨', desc: 'Can attack immediately, including the enemy hero.' },
+  stealth:                    { label: 'Stealth',         icon: '🌑', desc: 'Cannot be targeted until it attacks.' },
+  battlecry_draw_1:           { label: 'Battlecry',       icon: '🎴', desc: 'When played: Draw 1 card.' },
+  battlecry_draw_2:           { label: 'Battlecry',       icon: '🎴', desc: 'When played: Draw 2 cards.' },
+  battlecry_aoe_1:            { label: 'Battlecry',       icon: '🎴', desc: 'When played: Deal 1 damage to all enemies.' },
+  battlecry_aoe_2:            { label: 'Battlecry',       icon: '🎴', desc: 'When played: Deal 2 damage to all enemies.' },
+  battlecry_buff_friendly:    { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_1:       { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_2:       { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +2/+2.' },
+  battlecry_buff_self:        { label: 'Battlecry',       icon: '🎴', desc: 'When played: Gain +2/+2.' },
+  battlecry_silence:          { label: 'Battlecry',       icon: '🎴', desc: 'When played: Silence an enemy minion.' },
+  deathrattle_draw_1:         { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Draw 1 card.' },
+  deathrattle_summon_intern:  { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
+  deathrattle_damage_all:     { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Deal 1 damage to all minions.' },
+  deathrattle_heal_hero:      { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Restore 4 HP to your hero.' },
 }
 
 function getArt(card) {
@@ -37,7 +42,7 @@ function getArt(card) {
 }
 
 function CardModal({ card, onClose }) {
-  const abilities = card.abilities || []
+  const abilities = (card.abilities || []).filter(a => ABILITY_LABELS[a])
   return (
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
@@ -82,11 +87,12 @@ function CardModal({ card, onClose }) {
           </div>
         )}
 
-        {card.abilityDescription && (
-          <p className={styles.modalFlavorDesc}>{card.abilityDescription}</p>
+        {/* Flavour text: only show when the card has recognised abilities — it describes them in career terms */}
+        {abilities.length > 0 && card.abilityDescription && (
+          <p className={styles.modalFlavorDesc}>"{card.abilityDescription}"</p>
         )}
-
-        {card.specialAbility?.description && !card.abilityDescription && (
+        {/* Legacy old-format cards */}
+        {abilities.length === 0 && card.specialAbility?.description && (
           <p className={styles.modalFlavorDesc}>{card.specialAbility.description}</p>
         )}
 
@@ -99,8 +105,8 @@ function CardModal({ card, onClose }) {
 function CardThumb({ card, onClick }) {
   const abilities = (card.abilities || []).filter(a => ABILITY_LABELS[a])
   const hasTaunt = abilities.includes('taunt')
-  // Support old format: specialAbility object
-  const legacyDesc = abilities.length === 0 && (card.abilityDescription || card.specialAbility?.description)
+  // Only show legacy text for genuinely old-format cards that used specialAbility object
+  const legacyDesc = abilities.length === 0 && card.specialAbility?.description
   const legacyName = abilities.length === 0 && card.specialAbility?.name
 
   return (

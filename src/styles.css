@@ -301,27 +301,41 @@ body {
   background: var(--board-felt);
   display: grid;
   grid-template-rows: auto 1fr auto;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   grid-template-areas:
-    "opponent  endturn"
-    "board     endturn"
-    "current   endturn";
+    "left opponent  endturn"
+    "left board     endturn"
+    "left current   endturn";
   position: relative;
-  overflow: hidden;
 }
 
-/* Decorative corner pieces */
-.game-board::before, .game-board::after {
+/* Left / right side border panels */
+.board-side {
+  background: linear-gradient(180deg, #0e0704 0%, #1a0d05 40%, #1a0d05 60%, #0e0704 100%);
+  position: relative;
+  z-index: 2;
+}
+.board-side--left {
+  grid-area: left;
+  width: 80px;
+  border-right: 3px solid;
+  border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
+  box-shadow: inset -8px 0 20px rgba(0,0,0,0.6), 4px 0 12px rgba(0,0,0,0.5);
+}
+/* Wood grain accent on the border panels */
+.board-side::before {
   content: '';
   position: absolute;
-  width: 180px;
-  height: 180px;
-  background: radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%);
-  border-radius: 50%;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    rgba(255,255,255,0.015) 1px,
+    transparent 2px,
+    transparent 8px
+  );
   pointer-events: none;
 }
-.game-board::before { top: -40px; left: -40px; }
-.game-board::after  { bottom: -40px; right: 80px; }
 
 /* ── Player Areas ─────────────────────────────────────────────────────────── */
 .player-area {
@@ -330,8 +344,16 @@ body {
   align-items: center;
   padding: 0.4rem 0.75rem;
 }
-.opponent-area { grid-area: opponent; }
-.current-area  { grid-area: current; }
+.opponent-area {
+  grid-area: opponent;
+  background: linear-gradient(180deg, rgba(60,10,10,0.5) 0%, transparent 100%);
+  box-shadow: inset 0 -6px 18px rgba(0,0,0,0.4);
+}
+.current-area {
+  grid-area: current;
+  background: linear-gradient(180deg, transparent 0%, rgba(10,30,10,0.5) 100%);
+  box-shadow: inset 0 6px 18px rgba(0,0,0,0.4);
+}
 
 .hero-zone {
   display: flex;
@@ -706,11 +728,22 @@ body {
   grid-area: board;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   position: relative;
-  padding: 0 0.5rem;
   gap: 0;
+  background:
+    /* Theme colour overlay — warm dark amber to tie into the gold/brown UI */
+    linear-gradient(180deg, rgba(20,10,2,0.62) 0%, rgba(35,15,4,0.5) 50%, rgba(20,10,2,0.62) 100%),
+    /* Edge vignette */
+    radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.45) 100%),
+    /* Single image centred, stretched to fill — no tiling */
+    url('./images/woodtexture.jpg') center/100% 100% no-repeat;
+  border-top: 2px solid rgba(80,45,12,0.9);
+  border-bottom: 2px solid rgba(80,45,12,0.9);
+  box-shadow:
+    inset 0 6px 20px rgba(0,0,0,0.55),
+    inset 0 -6px 20px rgba(0,0,0,0.55);
 }
 
 .minion-row {
@@ -720,43 +753,79 @@ body {
   gap: 10px;
   width: 100%;
   min-height: 150px;
-  padding: 6px 0;
+  padding: 10px 1rem;
   position: relative;
 }
+/* Opponent side — subtle red tint on the felt surface */
 .opponent-row {
-  background: radial-gradient(ellipse at center, rgba(255,0,0,0.04) 0%, transparent 70%);
-  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at center, rgba(180,20,20,0.08) 0%, transparent 75%),
+    linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 100%);
 }
+/* Player side — subtle green tint */
 .player-row {
-  background: radial-gradient(ellipse at center, rgba(34,197,94,0.05) 0%, transparent 70%);
-  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at center, rgba(20,160,60,0.07) 0%, transparent 75%),
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.15) 100%);
 }
 
+/* ── Centre Divider — thin inlaid line ───────────────────────────────────── */
 .board-divider {
   width: 100%;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 0;
-}
-.rope {
-  width: 85%;
-  height: 3px;
-  background: linear-gradient(90deg,
-    transparent, rgba(201,162,39,0.2), rgba(201,162,39,0.6), rgba(201,162,39,0.8),
-    rgba(201,162,39,0.6), rgba(201,162,39,0.2), transparent);
-  border-radius: 2px;
   position: relative;
+  flex-shrink: 0;
 }
-.rope::before {
-  content: '⚔';
+/* The line itself */
+.board-divider::before {
+  content: '';
   position: absolute;
-  left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  left: 0;
+  right: 0;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(201,162,39,0.3) 8%,
+    rgba(201,162,39,0.75) 30%,
+    rgba(255,220,100,0.95) 50%,
+    rgba(201,162,39,0.75) 70%,
+    rgba(201,162,39,0.3) 92%,
+    transparent 100%
+  );
+  box-shadow: 0 0 6px rgba(201,162,39,0.5);
+}
+
+/* Crossed-swords emblem centred on the line */
+.rope {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.rope::before,
+.rope::after {
+  content: '';
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,162,39,0.6));
+}
+.rope::after {
+  background: linear-gradient(270deg, transparent, rgba(201,162,39,0.6));
+}
+
+.rope-icon {
   font-size: 1rem;
-  color: rgba(201,162,39,0.8);
-  text-shadow: 0 0 8px rgba(201,162,39,0.5);
+  filter: drop-shadow(0 0 5px rgba(201,162,39,0.85));
+  flex-shrink: 0;
+  z-index: 2;
+  line-height: 1;
 }
 
 .empty-board-hint {
@@ -945,7 +1014,7 @@ body {
   pointer-events: none;
 }
 
-/* ── End Turn Button Zone ─────────────────────────────────────────────────── */
+/* ── End Turn Button Zone (doubles as right border panel) ─────────────────── */
 .end-turn-zone {
   grid-area: endturn;
   display: flex;
@@ -953,8 +1022,28 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 0.75rem 0.75rem 0.5rem;
+  padding: 0.75rem;
   width: 130px;
+  background: linear-gradient(180deg, #0e0704 0%, #1a0d05 40%, #1a0d05 60%, #0e0704 100%);
+  border-left: 3px solid;
+  border-image: linear-gradient(180deg, transparent, rgba(201,162,39,0.7) 30%, rgba(201,162,39,0.9) 50%, rgba(201,162,39,0.7) 70%, transparent) 1;
+  box-shadow: inset 8px 0 20px rgba(0,0,0,0.6), -4px 0 12px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 2;
+}
+/* Subtle grain lines matching left panel */
+.end-turn-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    rgba(255,255,255,0.015) 1px,
+    transparent 2px,
+    transparent 8px
+  );
+  pointer-events: none;
 }
 
 .end-turn-btn {
@@ -1150,6 +1239,50 @@ body {
   from { box-shadow: 0 0 6px rgba(251,191,36,0.4); }
   to   { box-shadow: 0 0 14px rgba(251,191,36,0.9); }
 }
+/* ── Draw card animation ─────────────────────────────────────────────────── */
+@keyframes draw-card-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.7) rotate(-8deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(var(--end-x) - var(--start-x) - 50%),
+      calc(var(--end-y) - var(--start-y) - 50%)
+    ) scale(1.1) rotate(4deg);
+    opacity: 0;
+  }
+}
+
+.draw-card-anim {
+  position: fixed;
+  width: 54px;
+  height: 76px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f1f33 100%);
+  border: 2px solid #c9a227;
+  box-shadow: 0 0 16px rgba(201,162,39,0.6), 0 4px 16px rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  pointer-events: none;
+  z-index: 9999;
+  animation: draw-card-fly 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+.draw-card-anim::after {
+  content: '🂠';
+  font-size: 1.8rem;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 4px rgba(201,162,39,0.5));
+}
+
 @keyframes divine-shimmer {
   from { box-shadow: 0 0 12px rgba(147,197,253,0.7), 0 0 24px rgba(147,197,253,0.4), inset 0 0 10px rgba(147,197,253,0.15); }
   to   { box-shadow: 0 0 22px rgba(147,197,253,1),   0 0 44px rgba(147,197,253,0.7), inset 0 0 18px rgba(147,197,253,0.35); }

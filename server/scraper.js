@@ -3,9 +3,10 @@ import os from 'os'
 import path from 'path'
 import fs from 'fs'
 
-const CHROME_EXECUTABLE = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+const CHROME_EXECUTABLE = process.env.CHROME_PATH
+  || (os.platform() === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : '/usr/bin/chromium-browser')
 const SESSION_DIR = path.join(os.tmpdir(), 'career-arena-session')
-const HEADLESS_MODE = String(process.env.SCRAPER_HEADLESS || '').toLowerCase() === 'true'
+const HEADLESS_MODE = os.platform() !== 'win32' || String(process.env.SCRAPER_HEADLESS || '').toLowerCase() === 'true'
 
 let _browser = null
 let _loggedIn = false

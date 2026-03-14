@@ -349,7 +349,7 @@ function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect })
   );
 }
 
-function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed }) {
+function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
   return (
     <div
@@ -384,8 +384,8 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
         </div>
       )}
       <div className="minion-stats">
-        <span className="stat-attack">⚔{minion.attack}</span>
-        <span className={`stat-health ${minion.damaged ? 'damaged' : ''}`}>❤{minion.health}</span>
+        <span className={`stat-attack ${isBuffed ? 'stat-buffed' : ''}`}>⚔{minion.attack}</span>
+        <span className={`stat-health ${minion.damaged ? 'damaged' : ''} ${isBuffed ? 'stat-buffed' : ''}`}>❤{minion.health}</span>
       </div>
       {!canAttack && <div className="exhausted-overlay" />}
     </div>
@@ -448,6 +448,7 @@ export default function GameBoard() {
   const [newlyPlayed, setNewlyPlayed] = useState(new Set());
   const [inspectedCard, setInspectedCard] = useState(null);
   const [cantAffordId, setCantAffordId] = useState(null);
+  const [buffedIds, setBuffedIds] = useState(new Set());
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -466,6 +467,25 @@ export default function GameBoard() {
   function flashHeroFn(playerIdx) {
     setFlashHeroes(prev => new Set([...prev, playerIdx]));
     setTimeout(() => setFlashHeroes(prev => { const n = new Set(prev); n.delete(playerIdx); return n; }), 450);
+  }
+
+  function flashBuffedMinions(prevState, nextState, playerIdx) {
+    const prevBoard = prevState.players[playerIdx].board;
+    const nextBoard = nextState.players[playerIdx].board;
+    const ids = [];
+    nextBoard.forEach((m, i) => {
+      const prev = prevBoard[i];
+      if (prev && (m.attack > prev.attack || m.health > prev.health || m.maxHealth > prev.maxHealth)) {
+        ids.push(m.id);
+      }
+    });
+    if (ids.length === 0) return;
+    setBuffedIds(prev => new Set([...prev, ...ids]));
+    setTimeout(() => setBuffedIds(prev => {
+      const n = new Set(prev);
+      ids.forEach(id => n.delete(id));
+      return n;
+    }), 800);
   }
 
   function triggerAttack(curState, nextState, startPos, endPos, atkType, damage, isHero, oppIdx) {
@@ -554,6 +574,8 @@ export default function GameBoard() {
           if (pos) queueAnim({ kind: 'summon', attackType: getAttackType(card), x: pos.x, y: pos.y }, 0, 600);
         }, 50);
       }
+      // Flash any minions that got buffed by a battlecry
+      flashBuffedMinions(state, ns, cur);
     }
     setState(ns);
   }, [state, cur]);
@@ -649,14 +671,17 @@ export default function GameBoard() {
     <div className="game-board">
       <div className="player-area opponent-area">
         <div className="hero-zone">
+          <div className="hero-side-info hero-side-info--left">
+            <DeckCounter count={oppPlayer.deck.length} />
+            <div className="opp-mana-info">
+              <div className="mana-crystal full" style={{ opacity: 0.5 }} />
+              <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
+            </div>
+          </div>
           <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
             isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
             onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
-          <DeckCounter count={oppPlayer.deck.length} />
-          <div className="opp-mana-info">
-            <div className="mana-crystal full" style={{ opacity: 0.5 }} />
-            <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
-          </div>
+          <div className="hero-side-info hero-side-info--right" />
         </div>
         <div className="hand-zone opponent-hand">
           {oppPlayer.hand.map((_, i) => <HandCard key={i} card={null} isOpponent />)}
@@ -682,7 +707,7 @@ export default function GameBoard() {
               isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
               canAttack={minion.canAttack} onClick={() => handleSelectMinion(cur, i)} onInspect={setInspectedCard}
-              isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
+              isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} isBuffed={buffedIds.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}
         </div>
@@ -690,10 +715,14 @@ export default function GameBoard() {
 
       <div className="player-area current-area">
         <div className="hero-zone">
+          <div className="hero-side-info hero-side-info--left">
+            <ManaBar mana={curPlayer.mana} />
+          </div>
           <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
             onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
-          <DeckCounter count={curPlayer.deck.length} />
-          <ManaBar mana={curPlayer.mana} />
+          <div className="hero-side-info hero-side-info--right">
+            <DeckCounter count={curPlayer.deck.length} />
+          </div>
         </div>
         <div className="hand-zone player-hand">
           {curPlayer.hand.map((card, i) => (

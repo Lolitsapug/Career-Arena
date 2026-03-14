@@ -242,6 +242,20 @@
 
 .importBtn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
+.clearAllBtn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+  font-family: inherit;
+}
+.clearAllBtn:hover { color: #f87171; border-color: #f87171; }
+
 /* Empty state */
 .emptyLibrary {
   flex: 1;

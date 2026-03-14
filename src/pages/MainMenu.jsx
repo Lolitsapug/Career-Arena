@@ -22,7 +22,7 @@ function deckToProfile(deck) {
 
 export default function MainMenu() {
   const navigate = useNavigate()
-  const { savedDecks, player1Deck, player2Deck, isGenerating, generateError, generateDeck, selectDeck, deleteSavedDeck, clearSlot } = useDeckStore()
+  const { savedDecks, player1Deck, player2Deck, isGenerating, generateError, generateDeck, selectDeck, deleteSavedDeck, clearSlot, clearAllDecks } = useDeckStore()
 
   const [importModal, setImportModal]   = useState(false)
   const [profileInput, setProfileInput] = useState('')
@@ -129,9 +129,16 @@ export default function MainMenu() {
         <div className={styles.right}>
           <div className={styles.libraryHeader}>
             <h2 className={styles.libraryTitle}>Deck Library</h2>
-            <button className={styles.importBtn} onClick={() => setImportModal(true)}>
-              + Import LinkedIn
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {savedDecks.length > 0 && (
+                <button className={styles.clearAllBtn} onClick={() => { if (window.confirm('Clear all saved decks?')) clearAllDecks() }}>
+                  Clear All
+                </button>
+              )}
+              <button className={styles.importBtn} onClick={() => setImportModal(true)}>
+                + Import LinkedIn
+              </button>
+            </div>
           </div>
 
           {savedDecks.length === 0 ? (

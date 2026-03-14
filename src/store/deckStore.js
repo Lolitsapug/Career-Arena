@@ -83,4 +83,9 @@ export const useDeckStore = create((set, get) => ({
   },
 
   clearSlot: (playerNum) => set({ [`player${playerNum}Deck`]: null }),
+
+  clearAllDecks: () => {
+    persistDecks([])
+    set({ savedDecks: [], player1Deck: null, player2Deck: null })
+  },
 }))

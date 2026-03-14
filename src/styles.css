@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=MedievalSharp&display=swap');
 
 /* ── Reset & Base ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,7 +21,9 @@
   --shadow-gold:   0 0 12px rgba(201,162,39,0.6);
   --text-light:    #f5e6c8;
   --text-dim:      #a08060;
-  font-family: 'Inter', sans-serif;
+  --font-base: 'Inter', sans-serif;
+  --font-display: 'Cinzel', serif;
+  font-family: var(--font-base);
 
   /* ── Aliases for MainMenu/DeckViewer/Leaderboard CSS Modules ── */
   --bg-deep:        #0b0703;
@@ -52,6 +54,8 @@
 
 :root[data-theme='mono'] {
   color-scheme: dark;
+  --font-base: 'Inter', sans-serif;
+  --font-display: 'Cinzel', serif;
   --board-bg:      #080808;
   --board-felt:    radial-gradient(ellipse at 50% 50%, #171717 0%, #090909 100%);
   --gold:          #f1f1f1;
@@ -91,6 +95,49 @@
   --theme-toggle-active-text: #ffffff;
 }
 
+:root[data-theme='rune'] {
+  color-scheme: dark;
+  --font-base: 'MedievalSharp', 'Cinzel', serif;
+  --font-display: 'MedievalSharp', 'Cinzel', serif;
+  --board-bg:      #2c2c2c;
+  --board-felt:    radial-gradient(ellipse at 50% 50%, #3a3a3a 0%, #242424 100%);
+  --gold:          #f2c94c;
+  --gold-light:    #ffd777;
+  --green-glow:    #f2c94c;
+  --red-glow:      #f2c94c;
+  --blue-glow:     #f2c94c;
+  --purple-glow:   #d8b04a;
+  --card-bg:       #cfcfcf;
+  --card-border:   #6c6c6c;
+  --minion-bg:     #3f3f3f;
+  --mana-full:     #f2c94c;
+  --mana-empty:    #3b3b3b;
+  --hero-bg:       linear-gradient(135deg, #333333, #4a4a4a);
+  --shadow-gold:   0 0 12px rgba(242,201,76,0.4);
+  --text-light:    #f6f2e8;
+  --text-dim:      #bfb7a3;
+  --bg-deep:       #232323;
+  --bg-surface:    rgba(52,52,52,0.92);
+  --bg-raised:     rgba(70,70,70,0.95);
+  --border-subtle: rgba(242,201,76,0.22);
+  --text-primary:  #f6f2e8;
+  --text-muted:    #d0c7b4;
+  --accent-primary:#f2c94c;
+  --accent-secondary:#e0bf5a;
+  --accent-gold:   #f2c94c;
+  --accent-success:#f2c94c;
+  --accent-danger: #f2c94c;
+  --title-glow: 0 0 36px rgba(242,201,76,0.3);
+  --main-menu-left-glow: radial-gradient(ellipse at 40% 60%, rgba(242,201,76,0.08) 0%, transparent 70%);
+  --badge-primary-bg: rgba(242,201,76,0.2);
+  --badge-secondary-bg: rgba(242,201,76,0.12);
+  --button-secondary-hover-bg: rgba(242,201,76,0.12);
+  --theme-toggle-highlight: rgba(255,255,255,0.04);
+  --theme-toggle-active-bg: rgba(242,201,76,0.2);
+  --theme-toggle-active-border: rgba(242,201,76,0.45);
+  --theme-toggle-active-text: #1b1b1b;
+}
+
 body {
   margin: 0;
   background: var(--board-bg);
@@ -124,7 +171,7 @@ body {
   margin-bottom: 0.5rem;
 }
 .setup-title h1 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 3.5rem);
   background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
   -webkit-background-clip: text;
@@ -150,7 +197,7 @@ body {
 }
 
 .setup-vs {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
   color: var(--gold);
@@ -175,7 +222,7 @@ body {
   margin-bottom: 1.25rem;
 }
 .profile-form-header h2 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 0.95rem;
   color: var(--gold-light);
   font-weight: 600;
@@ -189,7 +236,7 @@ body {
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   flex-shrink: 0;
 }
 .player-badge--1 { background: linear-gradient(135deg, #2563eb, #1e3a8a); border: 2px solid #60a5fa; color: #bfdbfe; }
@@ -215,7 +262,7 @@ body {
   padding: 0.55rem 0.75rem;
   color: var(--text-light);
   font-size: 0.9rem;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-base);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .field input:focus {
@@ -228,7 +275,7 @@ body {
 .start-btn {
   margin-top: 2rem;
   padding: 1rem 3rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   background: linear-gradient(135deg, #15803d, #166534, #15803d);
@@ -325,7 +372,7 @@ body {
 }
 
 .hero-avatar {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--gold-light);
@@ -372,7 +419,7 @@ body {
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.65rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   color: var(--gold);
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
@@ -393,7 +440,7 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-dim);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
 }
 
 /* ── Mana Bar ─────────────────────────────────────────────────────────────── */
@@ -424,7 +471,7 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   color: #93c5fd;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   margin-left: 4px;
 }
 .opp-mana-info {
@@ -540,7 +587,7 @@ body {
 .card-name {
   font-size: 0.54rem;
   font-weight: 700;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   color: #3b1a06;
   text-align: center;
   line-height: 1.15;
@@ -659,7 +706,7 @@ body {
 .empty-board-hint {
   color: rgba(201,162,39,0.25);
   font-size: 0.75rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   letter-spacing: 0.1em;
   pointer-events: none;
 }
@@ -747,7 +794,7 @@ body {
 }
 .minion-name {
   font-size: 0.44rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-weight: 600;
   color: #bfdbfe;
   text-align: center;
@@ -807,7 +854,7 @@ body {
 .end-turn-btn {
   padding: 0.65rem 0;
   width: 110px;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
   background: linear-gradient(180deg, #16a34a, #15803d 50%, #14532d);
@@ -838,7 +885,7 @@ body {
   padding: 0.4rem 0;
   width: 90px;
   font-size: 0.7rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-weight: 600;
   background: linear-gradient(180deg, #7f1d1d, #991b1b);
   color: #fecaca;
@@ -855,14 +902,14 @@ body {
 .turn-indicator {
   font-size: 0.7rem;
   color: var(--gold);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   letter-spacing: 0.08em;
 }
 .active-player-label {
   font-size: 0.65rem;
   color: var(--text-dim);
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -881,7 +928,7 @@ body {
   padding: 0.5rem 1rem;
   font-size: 0.8rem;
   color: var(--gold-light);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   letter-spacing: 0.05em;
   pointer-events: none;
   z-index: 100;
@@ -902,7 +949,7 @@ body {
   padding: 0.3rem 1rem;
   font-size: 0.72rem;
   color: var(--text-dim);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   pointer-events: none;
   z-index: 50;
   white-space: nowrap;
@@ -935,7 +982,7 @@ body {
   margin-bottom: 1rem;
 }
 .transition-card h2 {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 2rem;
   color: var(--gold-light);
   margin-bottom: 0.75rem;
@@ -946,7 +993,7 @@ body {
   margin-bottom: 0.5rem;
 }
 .transition-player-name {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.5rem;
   color: var(--text-light);
   font-weight: 700;
@@ -966,7 +1013,7 @@ body {
 
 .ready-btn {
   padding: 0.9rem 2.5rem;
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 700;
   background: linear-gradient(135deg, #15803d, #166534);
@@ -1235,7 +1282,7 @@ body {
 
 /* ── Damage number ───────────────────────────────────────────────────────── */
 .damage-num {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: 900;
   color: #fca5a5;
@@ -1405,7 +1452,7 @@ body {
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
 }
 .inspect-name {
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--gold-light);
@@ -1447,7 +1494,7 @@ body {
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-light);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   line-height: 1;
 }
 .inspect-stat span:last-child {
@@ -1478,7 +1525,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--gold);
-  font-family: 'Cinzel', serif;
+  font-family: var(--font-display);
   margin-bottom: 3px;
 }
 .inspect-ability-desc {

@@ -5,6 +5,7 @@ const THEME_STORAGE_KEY = 'career-arena-theme'
 export const THEME_OPTIONS = [
   { id: 'arena', label: 'Arena' },
   { id: 'mono', label: 'Mono' },
+  { id: 'rune', label: 'Rune' },
 ]
 
 const ThemeContext = createContext(null)

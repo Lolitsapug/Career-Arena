@@ -162,7 +162,7 @@ export default function MainMenu() {
                     }
                   }}
                 >
-                  <Avatar name={deck.ownerName} size={40} />
+                  <Avatar name={deck.ownerName} size={40} imageUrl={deck.profileMeta?.profilePictureUrl} />
                   <div className={styles.deckInfo}>
                     <span className={styles.deckName}>{deck.ownerName}</span>
                     <span className={styles.deckMeta}>
@@ -240,7 +240,7 @@ export default function MainMenu() {
           ) : (
             savedDecks.map((deck, i) => (
               <div key={i} className={styles.pickerRow} onClick={() => handlePickDeck(deck)}>
-                <Avatar name={deck.ownerName} size={36} />
+                <Avatar name={deck.ownerName} size={36} imageUrl={deck.profileMeta?.profilePictureUrl} />
                 <div className={styles.deckInfo}>
                   <span className={styles.deckName}>{deck.ownerName}</span>
                   <span className={styles.deckMeta}>{deck.cards?.length ?? 0} cards · {deck.passive?.name ?? ''}</span>
@@ -276,7 +276,7 @@ function PlayerSlot({ num, deck, onPick, onClear }) {
       <div className={styles.slotLabel}>Player {num}</div>
       {deck ? (
         <div className={styles.slotDeck}>
-          <Avatar name={deck.ownerName} size={44} />
+          <Avatar name={deck.ownerName} size={44} imageUrl={deck.profileMeta?.profilePictureUrl} />
           <div className={styles.slotDeckInfo}>
             <span className={styles.slotName}>{deck.ownerName}</span>
             <span className={styles.slotMeta}>{deck.cards?.length ?? 0} cards · {deck.passive?.name ?? ''}</span>

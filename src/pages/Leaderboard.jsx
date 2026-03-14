@@ -75,7 +75,7 @@ export default function Leaderboard() {
                 {rank <= 3 ? RANK_BADGES[rank - 1] : <span className={styles.rankNum}>{rank}</span>}
               </span>
               <span className={styles.colPlayer}>
-                <Avatar name={player.name} size={32} />
+                <Avatar name={player.name} size={32} imageUrl={player.imageUrl} />
                 <div className={styles.playerInfo}>
                   <span className={styles.playerName}>{player.name}{player.isYou ? ' (You)' : ''}</span>
                   <span className={styles.playerMeta}>{player.role} · {player.company}</span>

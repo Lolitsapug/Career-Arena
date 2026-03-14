@@ -5,6 +5,7 @@ import fs from 'fs'
 
 const CHROME_EXECUTABLE = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const SESSION_DIR = path.join(os.tmpdir(), 'career-arena-session')
+const HEADLESS_MODE = String(process.env.SCRAPER_HEADLESS || '').toLowerCase() === 'true'
 
 let _browser = null
 let _loggedIn = false
@@ -22,7 +23,7 @@ async function getBrowser() {
   fs.mkdirSync(SESSION_DIR, { recursive: true })
   clearLocks()
   _browser = await puppeteer.launch({
-    headless: false,
+    headless: HEADLESS_MODE ? 'new' : false,
     executablePath: CHROME_EXECUTABLE,
     userDataDir: SESSION_DIR,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--window-size=1100,800'],

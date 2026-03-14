@@ -2251,7 +2251,7 @@ body {
   100% { opacity: 0;    transform: scale(0.8) rotate(0deg); }
 }
 
-/* ── Scale: sm (1080p) — manual toggle or auto-detected ──────────────────── */
+/* ── Scale: sm (1080p) ───────────────────────────────────────────────────── */
 :root[data-scale='sm'] {
   --card-w:        90px;
   --card-h:        144px;
@@ -2269,9 +2269,27 @@ body {
   --hand-hover-s:  1.14;
 }
 
-/* Auto-detect 1080p height */
+/* ── Scale: md (1200p) ───────────────────────────────────────────────────── */
+:root[data-scale='md'] {
+  --card-w:        102px;
+  --card-h:        162px;
+  --card-back-w:   102px;
+  --card-back-h:   162px;
+  --minion-w:      108px;
+  --minion-h:      144px;
+  --minion-row-h:  116px;
+  --hero-size:     100px;
+  --sidebar-w:     72px;
+  --endturn-w:     120px;
+  --endturn-btn-w: 100px;
+  --hand-peek:    -29px;
+  --hand-hover-y: -49px;
+  --hand-hover-s:  1.16;
+}
+
+/* Auto-detect by screen height */
 @media (max-height: 1120px) and (min-width: 769px) {
-  :root:not([data-scale='lg']) {
+  :root:not([data-scale='md']):not([data-scale='lg']) {
     --card-w:        90px;
     --card-h:        144px;
     --card-back-w:   90px;
@@ -2286,6 +2304,24 @@ body {
     --hand-peek:    -26px;
     --hand-hover-y: -44px;
     --hand-hover-s:  1.14;
+  }
+}
+@media (min-height: 1121px) and (max-height: 1300px) and (min-width: 769px) {
+  :root:not([data-scale='sm']):not([data-scale='lg']) {
+    --card-w:        102px;
+    --card-h:        162px;
+    --card-back-w:   102px;
+    --card-back-h:   162px;
+    --minion-w:      108px;
+    --minion-h:      144px;
+    --minion-row-h:  116px;
+    --hero-size:     100px;
+    --sidebar-w:     72px;
+    --endturn-w:     120px;
+    --endturn-btn-w: 100px;
+    --hand-peek:    -29px;
+    --hand-hover-y: -49px;
+    --hand-hover-s:  1.16;
   }
 }
 

@@ -591,14 +591,15 @@ export default function GameBoard() {
   const [scale, setScale] = useState(() => {
     const saved = localStorage.getItem('ca-scale');
     if (saved) { document.documentElement.dataset.scale = saved; return saved; }
-    // auto-detect: 1080p screens are ≤1120px tall
-    const auto = window.screen.height <= 1120 ? 'sm' : 'lg';
+    const h = window.screen.height;
+    const auto = h <= 1120 ? 'sm' : h <= 1300 ? 'md' : 'lg';
     document.documentElement.dataset.scale = auto;
     return auto;
   });
 
   function toggleScale() {
-    const next = scale === 'sm' ? 'lg' : 'sm';
+    const cycle = { sm: 'md', md: 'lg', lg: 'sm' };
+    const next = cycle[scale] ?? 'md';
     document.documentElement.dataset.scale = next;
     localStorage.setItem('ca-scale', next);
     setScale(next);
@@ -950,8 +951,8 @@ export default function GameBoard() {
         {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
         <div className="turn-indicator">Turn {state.turn}</div>
         <div className="active-player-label">{curPlayer.hero.name}</div>
-        <button className="scale-toggle-btn" onClick={toggleScale} title="Toggle display scale">
-          {scale === 'sm' ? '🔍 1080p' : '🔭 1440p'}
+        <button className="scale-toggle-btn" onClick={toggleScale} title="Cycle display scale">
+          {scale === 'sm' ? '🔍 1080p' : scale === 'md' ? '🔎 1200p' : '🔭 1440p'}
         </button>
       </div>
 

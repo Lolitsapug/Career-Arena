@@ -22,7 +22,7 @@ function drawCards(player, n) {
 }
 
 function hasTaunt(board) {
-  return board.some(m => m.abilities.includes('taunt') && !m.dead);
+  return board.some(m => m.abilities?.includes('taunt') && !m.dead);
 }
 
 function applyDamageToMinion(minion, amount) {
@@ -95,7 +95,7 @@ function resolveBattlecry(state, playerIdx, card) {
     const oppIdx = 1 - playerIdx;
     s.players[oppIdx].board = s.players[oppIdx].board.map(m => applyDamageToMinion(m, dmg));
     s.players[oppIdx].hero = applyDamageToHero(s.players[oppIdx].hero, dmg);
-    s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
+    s = removeDeadAndResolve(s); // fire deathrattles on AOE kills
   }
   if (abs.includes('battlecry_buff_all_1') || abs.includes('battlecry_buff_all_2') || abs.includes('battlecry_buff_friendly')) {
     const bonus = abs.includes('battlecry_buff_all_2') ? 2 : 1;
@@ -134,6 +134,9 @@ function resolveSpell(state, playerIdx, card, targetType, targetIdx) {
   const abs = card.abilities || [];
   const oppIdx = 1 - playerIdx;
 
+  if (abs.includes('spell_draw_1')) {
+    s.players[playerIdx] = drawCards(s.players[playerIdx], 1);
+  }
   if (abs.includes('spell_draw_2')) {
     s.players[playerIdx] = drawCards(s.players[playerIdx], 2);
   }
@@ -146,13 +149,8 @@ function resolveSpell(state, playerIdx, card, targetType, targetIdx) {
     const bonus = abs.includes('spell_buff_target_3') ? 3 : 2;
     if (targetType === 'friendly_minion' && targetIdx != null) {
       const m = s.players[playerIdx].board[targetIdx];
-      if (m) {
-        m.attack += bonus;
-        m.health += bonus;
-        m.maxHealth += bonus;
-      }
+      if (m) { m.attack += bonus; m.health += bonus; m.maxHealth += bonus; }
     } else if (s.players[playerIdx].board.length > 0) {
-      // fallback: buff the first minion
       s.players[playerIdx].board[0].attack += bonus;
       s.players[playerIdx].board[0].health += bonus;
       s.players[playerIdx].board[0].maxHealth += bonus;
@@ -162,27 +160,24 @@ function resolveSpell(state, playerIdx, card, targetType, targetIdx) {
     const dmg = abs.includes('spell_damage_3') ? 3 : 2;
     if (targetType === 'enemy_minion' && targetIdx != null) {
       s.players[oppIdx].board[targetIdx] = applyDamageToMinion(s.players[oppIdx].board[targetIdx], dmg);
-      s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
     } else if (targetType === 'friendly_minion' && targetIdx != null) {
-      // spell can target friendly too
       s.players[playerIdx].board[targetIdx] = applyDamageToMinion(s.players[playerIdx].board[targetIdx], dmg);
-      s.players[playerIdx].board = removeDeadMinions(s.players[playerIdx].board);
     } else if (s.players[oppIdx].board.length > 0) {
-      // fallback: damage random enemy minion
       const ri = Math.floor(Math.random() * s.players[oppIdx].board.length);
       s.players[oppIdx].board[ri] = applyDamageToMinion(s.players[oppIdx].board[ri], dmg);
-      s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
     }
+    s = removeDeadAndResolve(s); // fire deathrattles on spell kills
   }
   if (abs.includes('spell_aoe_4')) {
     s.players[oppIdx].board = s.players[oppIdx].board.map(m => applyDamageToMinion(m, 4));
-    s.players[oppIdx].board = removeDeadMinions(s.players[oppIdx].board);
+    s = removeDeadAndResolve(s); // fire deathrattles on AOE kills
   }
   if (abs.includes('spell_destroy_weak')) {
-    // Destroy lowest health enemy minion
+    // Mark weakest enemy minion as dead so deathrattle fires properly
     const weakIdx = s.players[oppIdx].board.findIndex(m => m.health <= 2);
     if (weakIdx !== -1) {
-      s.players[oppIdx].board.splice(weakIdx, 1);
+      s.players[oppIdx].board[weakIdx].dead = true;
+      s = removeDeadAndResolve(s);
     }
   }
   return s;

@@ -323,6 +323,23 @@ body {
   border-color: #22c55e;
   box-shadow: 0 0 10px rgba(34,197,94,0.4);
 }
+.hero-portrait.taunt-blocked {
+  border-color: #fbbf24;
+  box-shadow: 0 0 14px rgba(251,191,36,0.5);
+  cursor: not-allowed;
+  filter: brightness(0.75) saturate(0.6);
+}
+.hero-portrait.taunt-blocked::after {
+  content: '🛡';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.6rem;
+  opacity: 0.85;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(251,191,36,0.8));
+}
 
 .hero-avatar {
   font-family: 'Cinzel', serif;

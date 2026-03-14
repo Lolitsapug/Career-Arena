@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
   attackTarget, getValidTargets, resolveSpellTarget, getSpellTargets,
@@ -19,13 +19,50 @@ const VALID_ABILITIES = new Set([
 
 // Detect abilities that may be described in text but not in the abilities array (old format cards)
 function inferAbilitiesFromText(existingAbilities, description) {
+  const has = a => existingAbilities.includes(a);
   const extras = [];
   const d = (description || '').toLowerCase();
-  if (!existingAbilities.includes('taunt') && (d.includes('taunt') || d.includes('must be attacked first') || d.includes('protects other minions'))) extras.push('taunt');
-  if (!existingAbilities.includes('divine_shield') && (d.includes('divine shield') || d.includes('absorbs the first'))) extras.push('divine_shield');
-  if (!existingAbilities.includes('rush') && d.includes('rush')) extras.push('rush');
-  if (!existingAbilities.includes('charge') && d.includes('charge')) extras.push('charge');
-  return [...existingAbilities, ...extras].slice(0, 2);
+
+  // Keywords
+  if (!has('taunt')         && (d.includes('taunt') || d.includes('must be attacked first') || d.includes('protects other minions'))) extras.push('taunt');
+  if (!has('divine_shield') && (d.includes('divine shield') || d.includes('absorbs the first'))) extras.push('divine_shield');
+  if (!has('rush')          && d.includes('rush'))   extras.push('rush');
+  if (!has('charge')        && d.includes('charge')) extras.push('charge');
+
+  // Deathrattle: draw a card
+  if (!has('deathrattle_draw_1') &&
+      (d.includes('deathrattle') || d.includes('when this minion dies') || d.includes('when destroyed')) &&
+      (d.includes('draw') || d.includes('card'))) {
+    extras.push('deathrattle_draw_1');
+  }
+  // Deathrattle: summon intern
+  if (!has('deathrattle_summon_intern') &&
+      (d.includes('deathrattle') || d.includes('when this minion dies') || d.includes('when destroyed')) &&
+      (d.includes('summon') || d.includes('intern') || d.includes('1/1'))) {
+    extras.push('deathrattle_summon_intern');
+  }
+
+  // Battlecry: draw cards
+  if (!has('battlecry_draw_1') && !has('battlecry_draw_2') &&
+      (d.includes('battlecry') || d.includes('when played')) && d.includes('draw')) {
+    extras.push(d.includes('2 card') || d.includes('two card') ? 'battlecry_draw_2' : 'battlecry_draw_1');
+  }
+  // Battlecry: AOE damage
+  if (!has('battlecry_aoe_1') && !has('battlecry_aoe_2') &&
+      (d.includes('battlecry') || d.includes('when played')) &&
+      (d.includes('all enemies') || d.includes('all enemy') || d.includes('deal') && d.includes('damage to all'))) {
+    extras.push(d.includes('2 damage') || d.includes('2 dmg') ? 'battlecry_aoe_2' : 'battlecry_aoe_1');
+  }
+  // Battlecry: buff all friendly minions
+  if (!has('battlecry_buff_friendly') && !has('battlecry_buff_all_1') && !has('battlecry_buff_all_2') &&
+      (d.includes('battlecry') || d.includes('when played')) &&
+      (d.includes('friendly minion') || d.includes('all minion')) &&
+      (d.includes('+1/+1') || d.includes('+2/+2'))) {
+    extras.push(d.includes('+2/+2') ? 'battlecry_buff_all_2' : 'battlecry_buff_all_1');
+  }
+
+  // No slice limit — all valid abilities must be preserved
+  return [...existingAbilities, ...extras];
 }
 
 function geminiCardToGameCard(card) {
@@ -231,13 +268,13 @@ function DeckCounter({ count }) {
   );
 }
 
-function Hero({ hero, playerIdx, isOpponent, isValidTarget, onClick, isCurrentPlayer, isFlashing }) {
+function Hero({ hero, playerIdx, isOpponent, isValidTarget, isTauntBlocked, onClick, isCurrentPlayer, isFlashing }) {
   return (
     <div
       data-hero-idx={playerIdx}
-      className={`hero-portrait ${isOpponent ? 'hero-opponent' : 'hero-player'} ${isValidTarget ? 'valid-target' : ''} ${isCurrentPlayer && !isOpponent ? 'active-hero' : ''} ${isFlashing ? 'hero-taking-damage' : ''}`}
+      className={`hero-portrait ${isOpponent ? 'hero-opponent' : 'hero-player'} ${isValidTarget ? 'valid-target' : ''} ${isTauntBlocked ? 'taunt-blocked' : ''} ${isCurrentPlayer && !isOpponent ? 'active-hero' : ''} ${isFlashing ? 'hero-taking-damage' : ''}`}
       onClick={onClick}
-      title={`${hero.name} — ${hero.title} @ ${hero.company}`}
+      title={isTauntBlocked ? 'A Taunt minion must be attacked first!' : `${hero.name} — ${hero.title} @ ${hero.company}`}
     >
       <div className="hero-avatar">
         {hero.profilePictureUrl ? (
@@ -556,6 +593,7 @@ export default function GameBoard() {
 
   const handleHeroClick = useCallback((playerIdx) => {
     if (state.pendingSpell || playerIdx !== opp || !state.selectedMinion) return;
+    if (!validTargets.hero) return; // taunt minion present — must attack it first
     const attacker = state.players[cur].board[state.selectedMinion.boardIdx];
     if (!attacker) return;
     const atkPos  = getCenter(document.querySelector(`[data-minion-id="${attacker.id}"]`));
@@ -569,6 +607,17 @@ export default function GameBoard() {
   const handleReady       = useCallback(() => setState(beginNewTurn(state)), [state]);
   const handleCancelSpell = useCallback(() => setState(s => ({ ...s, pendingSpell: null })), []);
 
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.code !== 'Space' || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      e.preventDefault();
+      if (state.phase === 'play' && !state.pendingSpell) setState(endTurn(state));
+      else if (state.phase === 'transition') setState(beginNewTurn(state));
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [state]);
+
   if (state.phase === 'gameover')   return <GameOverScreen winner={state.players[state.winner]} onRestart={() => navigate('/')} />;
   if (state.phase === 'transition') return <TransitionScreen nextPlayerName={state.players[state.currentPlayer].hero.name} onReady={handleReady} />;
 
@@ -577,6 +626,7 @@ export default function GameBoard() {
       <div className="player-area opponent-area">
         <div className="hero-zone">
           <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
+            isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
             onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
           <DeckCounter count={oppPlayer.deck.length} />
           <div className="opp-mana-info">

@@ -3,9 +3,89 @@ import { useState, useCallback } from 'react';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
   attackTarget, getValidTargets, resolveSpellTarget, getSpellTargets,
-  createInitialState,
 } from '../gameEngine.js';
+import { generateDeck, generateHero } from '../cardGenerator.js';
 import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
+
+// ─── Convert a Gemini-generated deck card to game engine format ───────────────
+let _cardIdCtr = 0;
+function geminiCardToGameCard(card) {
+  // Map Gemini's specialAbility to a game engine ability string
+  const abilities = [];
+  const ability = card.specialAbility;
+  if (ability) {
+    const desc = (ability.description || '').toLowerCase();
+    const trigger = ability.trigger || '';
+    if (desc.includes('draw 2') || desc.includes('draw two')) abilities.push('battlecry_draw_2');
+    else if (desc.includes('draw')) abilities.push('battlecry_draw_1');
+    if (desc.includes('taunt')) abilities.push('taunt');
+    if (desc.includes('divine shield')) abilities.push('divine_shield');
+    if (desc.includes('charge')) abilities.push('charge');
+    if (desc.includes('+1/+1') && desc.includes('all')) abilities.push('battlecry_buff_all_1');
+    if (desc.includes('+2/+2') && desc.includes('all')) abilities.push('battlecry_buff_all_2');
+    if (desc.includes('deal 1 damage') && desc.includes('all')) abilities.push('battlecry_aoe_1');
+    if (desc.includes('deal 2 damage') && desc.includes('all')) abilities.push('battlecry_aoe_2');
+  }
+
+  const health = Math.min(Math.max(Number(card.hp) || 2, 1), 10);
+  return {
+    id: card.id || `g${++_cardIdCtr}_${Math.random().toString(36).slice(2, 6)}`,
+    name: card.name || 'Unknown',
+    type: 'MINION',
+    cost: Math.min(Math.max(Number(card.cost) || 1, 0), 10),
+    attack: Math.min(Math.max(Number(card.attack) || 1, 0), 10),
+    health,
+    maxHealth: health,
+    description: card.specialAbility?.description || '',
+    abilities,
+    hasDivineShield: abilities.includes('divine_shield'),
+    canAttack: false,
+    attacksAvailable: 0,
+    damaged: false,
+    dead: false,
+  };
+}
+
+// Build a player state from a saved deck (Gemini format) + profile metadata
+function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
+  const profile = savedDeck.profileMeta || {
+    name: savedDeck.ownerName || 'Unknown',
+    title: 'Professional',
+    company: 'Unknown',
+    skills: [],
+    experience: 1,
+  };
+  const hero = generateHero(profile);
+  const cards = (savedDeck.cards || []).map(geminiCardToGameCard);
+  // Shuffle
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  const hand = cards.splice(0, initialHandSize);
+  return { profile, hero, mana: { current: 0, max: 0 }, hand, deck: cards, board: [] };
+}
+
+function buildInitialState(deck1, deck2, profile1, profile2) {
+  // Use saved deck cards if available, otherwise fall back to cardGenerator
+  const p1 = deck1 ? buildPlayerFromSavedDeck(deck1, 3) : (() => {
+    const p = profile1 || { name: 'Player 1', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
+    const deck = generateDeck(p); const hero = generateHero(p);
+    const hand = deck.splice(0, 3);
+    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [] };
+  })();
+  const p2 = deck2 ? buildPlayerFromSavedDeck(deck2, 4) : (() => {
+    const p = profile2 || { name: 'Player 2', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
+    const deck = generateDeck(p); const hero = generateHero(p);
+    const hand = deck.splice(0, 4);
+    return { profile: p, hero, mana: { current: 0, max: 0 }, hand, deck, board: [] };
+  })();
+  return {
+    phase: 'play', currentPlayer: 0, turn: 1, winner: null, log: [],
+    selectedMinion: null, pendingSpell: null,
+    players: [p1, p2],
+  };
+}
 
 // ─── Emoji art lookup ─────────────────────────────────────────────────────────
 function getArt(card) {
@@ -168,11 +248,9 @@ export default function GameBoard() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { profile1, profile2 } = location.state || {};
-  const p1 = profile1 || { name: 'Player 1', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
-  const p2 = profile2 || { name: 'Player 2', title: 'Developer', company: 'Unknown', skills: [], experience: 1 };
+  const { profile1, profile2, deck1, deck2 } = location.state || {};
 
-  const [state, setState] = useState(() => beginNewTurn(createInitialState(p1, p2)));
+  const [state, setState] = useState(() => beginNewTurn(buildInitialState(deck1, deck2, profile1, profile2)));
 
   const [anims, setAnims]             = useState([]);
   const [deathGhosts, setDeathGhosts] = useState([]);

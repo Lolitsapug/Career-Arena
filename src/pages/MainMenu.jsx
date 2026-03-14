@@ -106,6 +106,8 @@ export default function MainMenu() {
           <div className={styles.actions}>
             <Button variant="primary" disabled={!bothReady} onClick={() => {
               navigate('/game', { state: {
+                deck1: player1Deck,
+                deck2: player2Deck,
                 profile1: deckToProfile(player1Deck),
                 profile2: deckToProfile(player2Deck),
               }});

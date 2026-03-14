@@ -617,6 +617,7 @@ export default function GameBoard() {
   const [cantAffordId, setCantAffordId] = useState(null);
   const [forfeitConfirm, setForfeitConfirm] = useState(false);
   const [wasForfeit, setWasForfeit] = useState(false);
+  const [opponentOnFire, setOpponentOnFire] = useState(false);
   const [buffedIds, setBuffedIds] = useState(new Set());
   const [drawAnims, setDrawAnims] = useState([]); // [{id, delay}]
   const [scale, setScale] = useState(() => {
@@ -653,6 +654,20 @@ export default function GameBoard() {
   function flashHeroFn(playerIdx) {
     setFlashHeroes(prev => { const n = new Set(prev); n.add(playerIdx); return n; });
     setTimeout(() => setFlashHeroes(prev => { const n = new Set(prev); n.delete(playerIdx); return n; }), 450);
+  }
+
+  function triggerFireAura() {
+    setOpponentOnFire(true);
+    setTimeout(() => setOpponentOnFire(false), 1500);
+    const areaEl = document.querySelector('.opponent-area');
+    if (areaEl) {
+      const rect = areaEl.getBoundingClientRect();
+      for (let i = 0; i < 8; i++) {
+        const x = rect.left + (0.1 + Math.random() * 0.8) * rect.width;
+        const y = rect.top  + (0.1 + Math.random() * 0.8) * rect.height;
+        queueAnim({ kind: 'impact', attackType: 'fire', x, y }, 350 + i * 100, 500);
+      }
+    }
   }
 
   function flashBuffedMinions(prevState, nextState, playerIdx) {
@@ -788,6 +803,23 @@ export default function GameBoard() {
       const drawCount = abs.includes('battlecry_draw_2') ? 2 : abs.includes('battlecry_draw_1') ? 1 : 0;
       if (drawCount > 0) setTimeout(() => triggerDrawAnimation(drawCount), 200);
     }
+    if (card.type === 'SPELL') {
+      const abs = card.abilities || [];
+      const isHeroDmg = abs.includes('spell_damage_hero_5') || abs.includes('spell_damage_hero');
+      if (isHeroDmg) {
+        const dmg = abs.includes('spell_damage_hero_5') ? 5 : 3;
+        const casterEl = document.querySelector(`[data-hero-idx="${cur}"]`);
+        const targetEl = document.querySelector(`[data-hero-idx="${opp}"]`);
+        const casterPos = getCenter(casterEl);
+        const targetPos = getCenter(targetEl);
+        if (casterPos && targetPos) {
+          queueAnim({ kind: 'projectile', attackType: 'fire', startX: casterPos.x, startY: casterPos.y, endX: targetPos.x, endY: targetPos.y }, 0, 400);
+          queueAnim({ kind: 'impact', attackType: 'fire', x: targetPos.x, y: targetPos.y }, 310, 700);
+          queueAnim({ kind: 'damage-num', x: targetPos.x, y: targetPos.y - 20, amount: dmg }, 330, 900);
+        }
+        triggerFireAura();
+      }
+    }
     setState(ns);
   }, [state, cur]);
 
@@ -915,7 +947,7 @@ export default function GameBoard() {
         </div>
       </div>
 
-      <div className="player-area opponent-area">
+      <div className={`player-area opponent-area${opponentOnFire ? ' opponent-fire-aura' : ''}`}>
         <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">

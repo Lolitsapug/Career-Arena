@@ -104,6 +104,7 @@ const DEFAULT_POOL = [
   { name: 'Ping on Slack',       attack: 0, health: 0, cost: 1, type: 'SPELL',  description: 'Deal 2 damage to a minion',                       abilities: ['spell_damage_2'] },
   { name: 'Pair Programming',    attack: 2, health: 2, cost: 2, type: 'MINION', description: '',                                                abilities: [] },
   { name: 'Code Review',         attack: 0, health: 0, cost: 2, type: 'SPELL',  description: 'Give a minion +3/+3',                             abilities: ['spell_buff_target_3'] },
+  { name: 'Pyroblast',           attack: 0, health: 0, cost: 7, type: 'SPELL',  description: 'Deal 5 damage to the enemy hero.',                abilities: ['spell_damage_hero_5'] },
 ];
 
 function shuffle(arr) {

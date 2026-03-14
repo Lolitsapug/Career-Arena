@@ -979,7 +979,7 @@ body {
   pointer-events: none;
 }
 /* Ensure card content sits above the shield fill */
-.board-minion > *:not(.taunt-shield) {
+.board-minion > *:not(.taunt-shield):not(.divine-aura) {
   position: relative;
   z-index: 1;
 }
@@ -1079,14 +1079,14 @@ body {
   position: absolute;
   inset: -14px -10px;
   border-radius: 50%;
-  border: 3px solid rgba(147,197,253,1);
+  border: 3px solid rgba(253,224,71,1);
   box-shadow:
-    0 0 12px rgba(147,197,253,0.9),
-    0 0 28px rgba(147,197,253,0.6),
-    inset 0 0 14px rgba(147,197,253,0.25);
-  background: rgba(147,197,253,0.08);
+    0 0 12px rgba(253,224,71,0.9),
+    0 0 28px rgba(253,224,71,0.6),
+    inset 0 0 14px rgba(253,224,71,0.2);
+  background: rgba(253,224,71,0.07);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
   animation: divine-shimmer 1.5s ease-in-out infinite alternate;
 }
 /* Stealth — dark smoky overlay on the card */
@@ -1650,8 +1650,8 @@ body {
 }
 
 @keyframes divine-shimmer {
-  from { box-shadow: 0 0 12px rgba(147,197,253,0.7), 0 0 24px rgba(147,197,253,0.4), inset 0 0 10px rgba(147,197,253,0.15); }
-  to   { box-shadow: 0 0 22px rgba(147,197,253,1),   0 0 44px rgba(147,197,253,0.7), inset 0 0 18px rgba(147,197,253,0.35); }
+  from { box-shadow: 0 0 12px rgba(253,224,71,0.7), 0 0 24px rgba(253,224,71,0.4), inset 0 0 10px rgba(253,224,71,0.15); }
+  to   { box-shadow: 0 0 22px rgba(253,224,71,1),   0 0 44px rgba(253,224,71,0.7), inset 0 0 18px rgba(253,224,71,0.35); }
 }
 @keyframes log-fade {
   0%  { opacity: 1; }

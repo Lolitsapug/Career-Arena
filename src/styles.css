@@ -483,8 +483,8 @@ body {
   overflow: hidden;
 }
 .hand-card--back {
-  width: 50px;
-  min-height: 68px;
+  width: 88px;
+  height: 148px;
   background: linear-gradient(135deg, #1e1b4b, #312e81);
   border: 2px solid #4c1d95;
   cursor: default;
@@ -1495,12 +1495,6 @@ body {
 /* ── Responsive ───────────────────────────────────────────────────────────── */
 @media (max-height: 700px) {
   .hero-portrait { width: 58px; height: 58px; }
-  .board-minion  { width: 68px; height: 82px; }
-  .hand-card     { width: 74px; min-height: 102px; }
-  .card-art      { font-size: 1.4rem; margin-top: 14px; }
-  .minion-art    { font-size: 1.5rem; }
-  .player-hand   { min-height: 90px; }
-  .minion-row    { min-height: 90px; }
 }
 
 @media (max-width: 768px) {

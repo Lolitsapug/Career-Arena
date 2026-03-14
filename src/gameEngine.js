@@ -27,7 +27,11 @@ function drawCards(player, n) {
 }
 
 function hasTaunt(board) {
-  return board.some(m => m.abilities?.includes('taunt') && !isMinionDead(m));
+  return board.some(m => m.abilities?.includes('taunt') && !isMinionDead(m) && !m.stealthed);
+}
+
+function isStealthed(minion) {
+  return Boolean(minion?.stealthed);
 }
 
 function applyDamageToMinion(minion, amount) {
@@ -56,6 +60,7 @@ function removeDeadMinions(board) {
 
 function resolveDeathrattles(state, playerIdx, deadMinions) {
   let s = deepClone(state);
+  const oppIdx = 1 - playerIdx;
   for (const m of deadMinions) {
     const abs = m.abilities || [];
     if (abs.includes('deathrattle_draw_1')) {
@@ -69,6 +74,18 @@ function resolveDeathrattles(state, playerIdx, deadMinions) {
         abilities: [], hasDivineShield: false,
         canAttack: false, attacksAvailable: 0, damaged: false, dead: false,
       });
+    }
+    if (abs.includes('deathrattle_damage_all')) {
+      // Deal 1 damage to all minions on both sides
+      s.players[playerIdx].board = s.players[playerIdx].board.map(bm => applyDamageToMinion(bm, 1));
+      s.players[oppIdx].board    = s.players[oppIdx].board.map(bm => applyDamageToMinion(bm, 1));
+      // Note: we don't recurse here to avoid infinite chains — dead minions from this will be cleaned up in the next removeDeadAndResolve pass
+    }
+    if (abs.includes('deathrattle_heal_hero')) {
+      s.players[playerIdx].hero = {
+        ...s.players[playerIdx].hero,
+        health: Math.min(s.players[playerIdx].hero.health + 4, s.players[playerIdx].hero.maxHealth ?? 30),
+      };
     }
   }
   return s;
@@ -110,6 +127,21 @@ function resolveBattlecry(state, playerIdx, card) {
       health: m.health + bonus,
       maxHealth: m.maxHealth + bonus,
     }));
+  }
+  if (abs.includes('battlecry_buff_self')) {
+    // Find the just-played minion (last on board) and give it +2/+2
+    const board = s.players[playerIdx].board;
+    if (board.length > 0) {
+      const last = board[board.length - 1];
+      last.attack += 2;
+      last.health += 2;
+      last.maxHealth += 2;
+    }
+  }
+  if (abs.includes('battlecry_silence')) {
+    // Silence is targeted — set pendingBattlecryTarget so UI can pick an enemy minion
+    // We store it similarly to pendingSpell; the game board will need to handle resolution
+    s.pendingBattlecryTarget = { type: 'silence', sourcePlayerIdx: playerIdx };
   }
   if (abs.includes('battlecry_spawn_2')) {
     for (let i = 0; i < 2 && s.players[playerIdx].board.length < 7; i++) {
@@ -260,13 +292,15 @@ export function playCard(state, cardIndex) {
 
   if (card.type === 'MINION') {
     // Place on board
-    const hasCharge = card.abilities?.includes('charge');
-    const hasRush   = card.abilities?.includes('rush');
+    const hasCharge  = card.abilities?.includes('charge');
+    const hasRush    = card.abilities?.includes('rush');
+    const hasStealth = card.abilities?.includes('stealth');
     const minion = {
       ...card,
       canAttack: hasCharge || hasRush,
       attacksAvailable: (hasCharge || hasRush) ? 1 : 0,
       rushOnly: hasRush && !hasCharge, // rush minions can't attack hero on first turn
+      stealthed: hasStealth,
       dead: false,
     };
     s.players[pi].board.push(minion);
@@ -333,6 +367,11 @@ export function attackTarget(state, targetType, targetIdx) {
 
   const oppBoard = s.players[oppIdx].board;
   const hasTnt = hasTaunt(oppBoard);
+
+  // Attacking breaks stealth
+  if (s.players[atkPI].board[atkBI]) {
+    s.players[atkPI].board[atkBI].stealthed = false;
+  }
 
   if (targetType === 'enemy_minion') {
     if (hasTnt && !oppBoard[targetIdx]?.abilities?.includes('taunt')) {
@@ -430,15 +469,34 @@ export function getValidTargets(state) {
   const isRushOnly = attacker?.rushOnly;
 
   if (tntPresent) {
+    // Only taunt minions are valid — stealthed taunt minions still must be attacked
     return {
-      minions: oppBoard.map((m, i) => (m.abilities?.includes('taunt') ? i : -1)).filter(i => i !== -1),
+      minions: oppBoard.map((m, i) => (m.abilities?.includes('taunt') && !m.stealthed ? i : -1)).filter(i => i !== -1),
       hero: false,
     };
   }
+  // Stealthed minions cannot be targeted
   return {
-    minions: oppBoard.map((_, i) => i),
+    minions: oppBoard.map((m, i) => (isStealthed(m) ? -1 : i)).filter(i => i !== -1),
     hero: !isRushOnly,
   };
+}
+
+/** Resolve a battlecry silence on a target enemy minion */
+export function resolveBattlecryTarget(state, targetIdx) {
+  let s = deepClone(state);
+  if (!s.pendingBattlecryTarget) return s;
+  const { type, sourcePlayerIdx } = s.pendingBattlecryTarget;
+  s.pendingBattlecryTarget = null;
+  const oppIdx = 1 - sourcePlayerIdx;
+  if (type === 'silence' && s.players[oppIdx].board[targetIdx]) {
+    const m = s.players[oppIdx].board[targetIdx];
+    m.abilities = [];
+    m.hasDivineShield = false;
+    m.stealthed = false;
+    m.silenced = true;
+  }
+  return s;
 }
 
 /** Determine valid spell targets given pending spell */

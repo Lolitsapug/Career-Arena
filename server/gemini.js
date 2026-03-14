@@ -19,16 +19,21 @@ RULES FOR CARDS:
 - abilityDescription: a short flavour sentence explaining the ability in career terms (e.g. "Blocks all attacks — like a solid project manager protecting the team."). null if no abilities.
 
 VALID ABILITIES (use ONLY these exact strings):
-- "taunt"              — Must be attacked first. Use for defensive/management roles.
-- "divine_shield"      — Absorbs the first hit. Use for stable long-tenure roles.
-- "rush"               — Can attack enemy minions immediately when played. Use for go-getter/sales roles.
-- "battlecry_draw_1"   — Battlecry: Draw 1 card. Use for research/learning roles.
-- "battlecry_draw_2"   — Battlecry: Draw 2 cards. Use for senior learning/mentoring roles.
-- "battlecry_aoe_1"    — Battlecry: Deal 1 damage to ALL enemies. Use for disruptive/founder roles.
-- "battlecry_aoe_2"    — Battlecry: Deal 2 damage to ALL enemies. Use for high-impact executive roles.
-- "battlecry_buff_friendly" — Battlecry: Give all friendly minions +1/+1. Use for team-lead roles.
-- "deathrattle_draw_1" — Deathrattle: Draw 1 card when destroyed. Use for legacy/documentation roles.
-- "deathrattle_summon_intern" — Deathrattle: Summon a 1/1 Intern when destroyed. Use for mentor roles.
+- "taunt"                    — Must be attacked first. Use for defensive/management roles.
+- "divine_shield"            — Absorbs the first hit. Use for stable long-tenure roles.
+- "rush"                     — Can attack enemy minions immediately when played. Use for go-getter/sales roles.
+- "stealth"                  — Cannot be targeted until it attacks. Use for behind-the-scenes/strategic roles.
+- "battlecry_draw_1"         — Battlecry: Draw 1 card. Use for research/learning roles.
+- "battlecry_draw_2"         — Battlecry: Draw 2 cards. Use for senior learning/mentoring roles.
+- "battlecry_aoe_1"          — Battlecry: Deal 1 damage to ALL enemies. Use for disruptive/founder roles.
+- "battlecry_aoe_2"          — Battlecry: Deal 2 damage to ALL enemies. Use for high-impact executive roles.
+- "battlecry_buff_friendly"  — Battlecry: Give all friendly minions +1/+1. Use for team-lead roles.
+- "battlecry_buff_self"      — Battlecry: Gain +2/+2. Use for individual high-achiever roles.
+- "battlecry_silence"        — Battlecry: Silence an enemy minion. Use for influential/disruptive roles.
+- "deathrattle_draw_1"       — Deathrattle: Draw 1 card when destroyed. Use for legacy/documentation roles.
+- "deathrattle_summon_intern"— Deathrattle: Summon a 1/1 Intern when destroyed. Use for mentor roles.
+- "deathrattle_damage_all"   — Deathrattle: Deal 1 damage to ALL minions when destroyed. Use for high-drama exits.
+- "deathrattle_heal_hero"    — Deathrattle: Restore 4 HP to your hero when destroyed. Use for loyal/support roles.
 
 RULES FOR PASSIVE:
 - Pick the player's most prominent skill and turn it into a passive game bonus
@@ -126,11 +131,12 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
   }
 
   const VALID_ABILITIES = new Set([
-    'taunt', 'divine_shield', 'rush',
+    'taunt', 'divine_shield', 'rush', 'stealth',
     'battlecry_draw_1', 'battlecry_draw_2',
     'battlecry_aoe_1', 'battlecry_aoe_2',
-    'battlecry_buff_friendly',
+    'battlecry_buff_friendly', 'battlecry_buff_self', 'battlecry_silence',
     'deathrattle_draw_1', 'deathrattle_summon_intern',
+    'deathrattle_damage_all', 'deathrattle_heal_hero',
   ])
 
   // Fuzzy-match ability strings in case Gemini returns slightly wrong casing/format
@@ -142,13 +148,18 @@ export async function generateDeckFromProfile(profileText, profileUrl) {
     if (s.includes('taunt')) return 'taunt'
     if (s.includes('divine')) return 'divine_shield'
     if (s.includes('rush')) return 'rush'
+    if (s.includes('stealth')) return 'stealth'
     if (s.includes('charge')) return null // not in our set
+    if (s.includes('silence')) return 'battlecry_silence'
     if (s.includes('draw_2') || s.includes('draw2')) return 'battlecry_draw_2'
     if (s.includes('draw_1') || s.includes('draw1') || s.includes('draw')) return 'battlecry_draw_1'
     if (s.includes('aoe_2') || s.includes('aoe2')) return 'battlecry_aoe_2'
     if (s.includes('aoe_1') || s.includes('aoe1') || s.includes('aoe')) return 'battlecry_aoe_1'
+    if (s.includes('buff_self')) return 'battlecry_buff_self'
     if (s.includes('buff_friendly') || s.includes('buff')) return 'battlecry_buff_friendly'
     if (s.includes('deathrattle') && s.includes('intern')) return 'deathrattle_summon_intern'
+    if (s.includes('deathrattle') && s.includes('heal')) return 'deathrattle_heal_hero'
+    if (s.includes('deathrattle') && s.includes('damage')) return 'deathrattle_damage_all'
     if (s.includes('deathrattle')) return 'deathrattle_draw_1'
     if (s.includes('battlecry')) return 'battlecry_draw_1'
     return null

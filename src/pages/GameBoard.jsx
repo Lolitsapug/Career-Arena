@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
   attackTarget, getValidTargets, resolveSpellTarget, getSpellTargets,
-  forfeitGame,
+  forfeitGame, resolveBattlecryTarget,
 } from '../gameEngine.js';
 import { generateDeck, generateHero } from '../cardGenerator.js';
 import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
@@ -11,11 +11,13 @@ import AnimLayer, { getAttackType } from '../AnimLayer.jsx';
 // ─── Convert a Gemini-generated deck card to game engine format ───────────────
 let _cardIdCtr = 0;
 const VALID_ABILITIES = new Set([
-  'taunt', 'divine_shield', 'rush', 'charge',
+  'taunt', 'divine_shield', 'rush', 'charge', 'stealth',
   'battlecry_draw_1', 'battlecry_draw_2',
   'battlecry_aoe_1', 'battlecry_aoe_2',
   'battlecry_buff_friendly', 'battlecry_buff_all_1', 'battlecry_buff_all_2',
+  'battlecry_buff_self', 'battlecry_silence',
   'deathrattle_draw_1', 'deathrattle_summon_intern',
+  'deathrattle_damage_all', 'deathrattle_heal_hero',
 ]);
 
 // Detect abilities that may be described in text but not in the abilities array (old format cards)
@@ -128,7 +130,7 @@ function buildInitialState(deck1, deck2, profile1, profile2) {
   })();
   return {
     phase: 'play', currentPlayer: 0, turn: 1, winner: null, log: [],
-    selectedMinion: null, pendingSpell: null,
+    selectedMinion: null, pendingSpell: null, pendingBattlecryTarget: null,
     players: [p1, p2],
   };
 }
@@ -159,19 +161,24 @@ function getArt(card) {
 
 // ─── Ability metadata ─────────────────────────────────────────────────────────
 const ABILITY_INFO = {
-  taunt:                     { label: 'Taunt',        icon: '🛡️', desc: 'Must be attacked before other minions or the hero.' },
-  divine_shield:             { label: 'Divine Shield', icon: '✨', desc: 'Absorbs the first source of damage, then breaks.' },
-  rush:                      { label: 'Rush',          icon: '⚡', desc: 'Can attack enemy minions immediately when played. Cannot attack the hero until next turn.' },
-  charge:                    { label: 'Charge',        icon: '💨', desc: 'Can attack immediately, including the enemy hero.' },
-  battlecry_draw_1:          { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 1 card.' },
-  battlecry_draw_2:          { label: 'Battlecry',     icon: '🎴', desc: 'When played: Draw 2 cards.' },
-  battlecry_aoe_1:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 1 damage to all enemies.' },
-  battlecry_aoe_2:           { label: 'Battlecry',     icon: '🎴', desc: 'When played: Deal 2 damage to all enemies.' },
-  battlecry_buff_friendly:   { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
-  battlecry_buff_all_1:      { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
-  battlecry_buff_all_2:      { label: 'Battlecry',     icon: '🎴', desc: 'When played: Give all friendly minions +2/+2.' },
-  deathrattle_draw_1:        { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Draw 1 card.' },
-  deathrattle_summon_intern: { label: 'Deathrattle',   icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
+  taunt:                     { label: 'Taunt',          icon: '🛡️', desc: 'Must be attacked before other minions or the hero.' },
+  divine_shield:             { label: 'Divine Shield',  icon: '✨', desc: 'Absorbs the first source of damage, then breaks.' },
+  rush:                      { label: 'Rush',            icon: '⚡', desc: 'Can attack enemy minions immediately when played.' },
+  charge:                    { label: 'Charge',          icon: '💨', desc: 'Can attack immediately, including the enemy hero.' },
+  stealth:                   { label: 'Stealth',         icon: '🌑', desc: 'Cannot be targeted by attacks or abilities until it attacks.' },
+  battlecry_draw_1:          { label: 'Battlecry',       icon: '🎴', desc: 'When played: Draw 1 card.' },
+  battlecry_draw_2:          { label: 'Battlecry',       icon: '🎴', desc: 'When played: Draw 2 cards.' },
+  battlecry_aoe_1:           { label: 'Battlecry',       icon: '🎴', desc: 'When played: Deal 1 damage to all enemies.' },
+  battlecry_aoe_2:           { label: 'Battlecry',       icon: '🎴', desc: 'When played: Deal 2 damage to all enemies.' },
+  battlecry_buff_friendly:   { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_1:      { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +1/+1.' },
+  battlecry_buff_all_2:      { label: 'Battlecry',       icon: '🎴', desc: 'When played: Give all friendly minions +2/+2.' },
+  battlecry_buff_self:       { label: 'Battlecry',       icon: '🎴', desc: 'When played: Gain +2/+2.' },
+  battlecry_silence:         { label: 'Battlecry',       icon: '🎴', desc: 'When played: Silence an enemy minion, removing all its abilities.' },
+  deathrattle_draw_1:        { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Draw 1 card.' },
+  deathrattle_summon_intern: { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Summon a 1/1 Intern.' },
+  deathrattle_damage_all:    { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Deal 1 damage to ALL minions.' },
+  deathrattle_heal_hero:     { label: 'Deathrattle',     icon: '💀', desc: 'When destroyed: Restore 4 HP to your hero.' },
 };
 
 // ─── Card inspect modal ───────────────────────────────────────────────────────
@@ -342,7 +349,7 @@ function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect })
   );
 }
 
-function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed }) {
+function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
   return (
     <div
@@ -353,6 +360,8 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
         ${canAttack        ? 'can-attack'         : 'exhausted'}
         ${minion.abilities?.includes('taunt') ? 'has-taunt' : ''}
         ${minion.hasDivineShield ? 'has-divine' : ''}
+        ${minion.stealthed  ? 'is-stealthed'      : ''}
+        ${minion.silenced   ? 'is-silenced'       : ''}
         ${isLunging        ? 'lunging'            : ''}
         ${isTakingHit      ? 'taking-hit'         : ''}
         ${isNewlyPlayed    ? 'just-summoned'      : ''}
@@ -360,6 +369,7 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
       onClick={onClick}
       onContextMenu={e => { e.preventDefault(); onInspect(minion); }}
     >
+      {minion.abilities?.includes('taunt') && <div className="taunt-shield" />}
       {minion.hasDivineShield && <div className="divine-aura" />}
       <div className="minion-art">{getArt(minion)}</div>
       <div className="minion-name">{minion.name}</div>
@@ -374,8 +384,8 @@ function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick
         </div>
       )}
       <div className="minion-stats">
-        <span className="stat-attack">⚔{minion.attack}</span>
-        <span className={`stat-health ${minion.damaged ? 'damaged' : ''}`}>❤{minion.health}</span>
+        <span className={`stat-attack ${isBuffed ? 'stat-buffed' : ''}`}>⚔{minion.attack}</span>
+        <span className={`stat-health ${minion.damaged ? 'damaged' : ''} ${isBuffed ? 'stat-buffed' : ''}`}>❤{minion.health}</span>
       </div>
       {!canAttack && <div className="exhausted-overlay" />}
     </div>
@@ -515,6 +525,7 @@ export default function GameBoard() {
   const [cantAffordId, setCantAffordId] = useState(null);
   const [forfeitConfirm, setForfeitConfirm] = useState(false);
   const [wasForfeit, setWasForfeit] = useState(false);
+  const [buffedIds, setBuffedIds] = useState(new Set());
 
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
@@ -533,6 +544,25 @@ export default function GameBoard() {
   function flashHeroFn(playerIdx) {
     setFlashHeroes(prev => new Set([...prev, playerIdx]));
     setTimeout(() => setFlashHeroes(prev => { const n = new Set(prev); n.delete(playerIdx); return n; }), 450);
+  }
+
+  function flashBuffedMinions(prevState, nextState, playerIdx) {
+    const prevBoard = prevState.players[playerIdx].board;
+    const nextBoard = nextState.players[playerIdx].board;
+    const ids = [];
+    nextBoard.forEach((m, i) => {
+      const prev = prevBoard[i];
+      if (prev && (m.attack > prev.attack || m.health > prev.health || m.maxHealth > prev.maxHealth)) {
+        ids.push(m.id);
+      }
+    });
+    if (ids.length === 0) return;
+    setBuffedIds(prev => new Set([...prev, ...ids]));
+    setTimeout(() => setBuffedIds(prev => {
+      const n = new Set(prev);
+      ids.forEach(id => n.delete(id));
+      return n;
+    }), 800);
   }
 
   function triggerAttack(curState, nextState, startPos, endPos, atkType, damage, isHero, oppIdx) {
@@ -621,11 +651,19 @@ export default function GameBoard() {
           if (pos) queueAnim({ kind: 'summon', attackType: getAttackType(card), x: pos.x, y: pos.y }, 0, 600);
         }, 50);
       }
+      // Flash any minions that got buffed by a battlecry
+      flashBuffedMinions(state, ns, cur);
     }
     setState(ns);
   }, [state, cur]);
 
   const handleSelectMinion = useCallback((playerIdx, boardIdx) => {
+    if (state.pendingBattlecryTarget) {
+      // Silence targeting — must pick an enemy minion
+      if (playerIdx !== opp) return; // must be enemy
+      setState(resolveBattlecryTarget(state, boardIdx));
+      return;
+    }
     if (state.pendingSpell) {
       const isFriendly = playerIdx === cur;
       const abs = state.pendingSpell.card.abilities || [];
@@ -726,14 +764,17 @@ export default function GameBoard() {
 
       <div className="player-area opponent-area">
         <div className="hero-zone">
+          <div className="hero-side-info hero-side-info--left">
+            <DeckCounter count={oppPlayer.deck.length} />
+            <div className="opp-mana-info">
+              <div className="mana-crystal full" style={{ opacity: 0.5 }} />
+              <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
+            </div>
+          </div>
           <Hero hero={oppPlayer.hero} playerIdx={opp} isOpponent isValidTarget={validTargets.hero}
             isTauntBlocked={!!state.selectedMinion && !validTargets.hero}
             onClick={() => handleHeroClick(opp)} isCurrentPlayer={false} isFlashing={flashHeroes.has(opp)} />
-          <DeckCounter count={oppPlayer.deck.length} />
-          <div className="opp-mana-info">
-            <div className="mana-crystal full" style={{ opacity: 0.5 }} />
-            <span>{oppPlayer.mana.current}/{oppPlayer.mana.max}</span>
-          </div>
+          <div className="hero-side-info hero-side-info--right" />
         </div>
         <div className="hand-zone opponent-hand">
           {oppPlayer.hand.map((_, i) => <HandCard key={i} card={null} isOpponent />)}
@@ -744,7 +785,7 @@ export default function GameBoard() {
         <div className="minion-row opponent-row">
           {oppPlayer.board.map((minion, i) => (
             <BoardMinionCard key={minion.id} minion={minion} isSelected={false}
-              isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i))}
+              isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i)) || (!!state.pendingBattlecryTarget && state.pendingBattlecryTarget.type === 'silence')}
               canAttack={false} onClick={() => handleSelectMinion(opp, i)} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
           ))}
@@ -759,7 +800,7 @@ export default function GameBoard() {
               isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
               canAttack={minion.canAttack} onClick={() => handleSelectMinion(cur, i)} onInspect={setInspectedCard}
-              isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
+              isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} isBuffed={buffedIds.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}
         </div>
@@ -767,10 +808,14 @@ export default function GameBoard() {
 
       <div className="player-area current-area">
         <div className="hero-zone">
+          <div className="hero-side-info hero-side-info--left">
+            <ManaBar mana={curPlayer.mana} />
+          </div>
           <Hero hero={curPlayer.hero} playerIdx={cur} isOpponent={false} isValidTarget={false}
             onClick={() => handleHeroClick(cur)} isCurrentPlayer isFlashing={flashHeroes.has(cur)} />
-          <DeckCounter count={curPlayer.deck.length} />
-          <ManaBar mana={curPlayer.mana} />
+          <div className="hero-side-info hero-side-info--right">
+            <DeckCounter count={curPlayer.deck.length} />
+          </div>
         </div>
         <div className="hand-zone player-hand">
           {curPlayer.hand.map((card, i) => (
@@ -783,11 +828,12 @@ export default function GameBoard() {
       </div>
 
       <div className="end-turn-zone">
-        <button className={`end-turn-btn ${state.pendingSpell ? 'disabled' : ''}`}
-          onClick={state.pendingSpell ? undefined : handleEndTurn}>
-          {state.pendingSpell ? 'Choose Target' : 'END TURN'}
+        <button className={`end-turn-btn ${(state.pendingSpell || state.pendingBattlecryTarget) ? 'disabled' : ''}`}
+          onClick={(state.pendingSpell || state.pendingBattlecryTarget) ? undefined : handleEndTurn}>
+          {(state.pendingSpell || state.pendingBattlecryTarget) ? 'Choose Target' : 'END TURN'}
         </button>
         {state.pendingSpell && <button className="cancel-btn" onClick={handleCancelSpell}>Cancel</button>}
+        {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
         <div className="turn-indicator">Turn {state.turn}</div>
         <div className="active-player-label">{curPlayer.hero.name}</div>
       </div>
@@ -798,6 +844,11 @@ export default function GameBoard() {
       {state.pendingSpell && (
         <div className="action-hint spell-hint">
           🎯 Select a target for <strong>{state.pendingSpell.card.name}</strong>
+        </div>
+      )}
+      {state.pendingBattlecryTarget && (
+        <div className="action-hint spell-hint">
+          🤫 Select an enemy minion to <strong>Silence</strong>
         </div>
       )}
 

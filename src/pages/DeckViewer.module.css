@@ -143,6 +143,9 @@
 .cardThumbTaunt:hover {
   box-shadow: 0 0 0 2px rgba(201,162,39,1), 0 0 28px rgba(201,162,39,0.7), 0 8px 20px rgba(0,0,0,0.6);
 }
+.cardThumbTaunt .thumbName { color: #ffffff; }
+.cardThumbTaunt .thumbAbilityText { color: #ffffff; }
+.cardThumbTaunt .thumbAbilityText strong { color: #ffffff; }
 
 .cardThumbSpell {
   background: linear-gradient(180deg, #e0d6f0 0%, #c4b5e8 100%);

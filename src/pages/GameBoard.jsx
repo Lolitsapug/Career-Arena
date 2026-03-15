@@ -902,6 +902,13 @@ export default function GameBoard() {
     if (isOnline) {
       if (card.type === 'SPELL') {
         const abs = card.abilities || [];
+        const needsTarget = abs.some(a =>
+          ['spell_damage_3', 'spell_damage_2', 'spell_buff_target', 'spell_buff_target_3', 'spell_freeze'].includes(a)
+        );
+        if (needsTarget) {
+          // Optimistic: show cancel button immediately
+          setState(s => ({ ...s, pendingSpell: { cardIndex: cardIdx, card } }));
+        }
         const isHeroDmg = abs.includes('spell_damage_hero_5') || abs.includes('spell_damage_hero');
         if (isHeroDmg) {
           const dmg = abs.includes('spell_damage_hero_5') ? 5 : 3;
@@ -1011,7 +1018,12 @@ export default function GameBoard() {
     }
 
     if (playerIdx === me) {
-      if (isOnline) { emitAction('select-minion', { boardIdx }); return; }
+      if (isOnline) {
+        // Optimistic local update so hero/minion targets respond instantly
+        setState(selectMinion(state, playerIdx, boardIdx));
+        emitAction('select-minion', { boardIdx });
+        return;
+      }
       setState(selectMinion(state, playerIdx, boardIdx));
       return;
     }

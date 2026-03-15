@@ -7,8 +7,9 @@ React + Vite LinkedIn battle card game
 ```bash
 npm install
 npm run dev
-open a second terminal
-npm run server 
+
+run the server
+node server/index.js
 ```
 
 Open the local URL shown in terminal (usually `http://localhost:5173`).

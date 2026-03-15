@@ -79,6 +79,23 @@ export function geminiCardToGameCard(card) {
   };
 }
 
+// Map known passive names to their keys
+const PASSIVE_NAME_TO_KEY = {
+  'Leadership Aura': 'leadership',
+  'Network Effect': 'communication',
+  'Resource Allocation': 'management',
+  'Optimization': 'engineering',
+  'Creative Vision': 'design',
+  'Persuasion': 'sales',
+  'Veteran Presence': 'default',
+};
+
+function resolvePassiveKey(passive) {
+  if (!passive) return null;
+  const key = passive.key ?? PASSIVE_NAME_TO_KEY[passive.name] ?? 'default';
+  return { key, name: passive.name, description: passive.description };
+}
+
 export function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
   const profile = savedDeck.profileMeta || {
     name: savedDeck.ownerName || 'Unknown',
@@ -88,14 +105,41 @@ export function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
     experience: 1,
     profilePictureUrl: null,
   };
-  const hero = generateHero(profile);
+  let hero = generateHero(profile);
   const cards = (savedDeck.cards || []).map(geminiCardToGameCard);
   for (let i = cards.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
-  const hand = cards.splice(0, initialHandSize);
-  return { profile, hero, mana: { current: 0, max: 0 }, hand, deck: cards, board: [], discard: [] };
+  let hand = cards.splice(0, initialHandSize);
+  let deck = cards;
+
+  const passive = resolvePassiveKey(savedDeck.passive);
+
+  // Apply init-time passive effects
+  if (passive?.key === 'leadership') {
+    hand = hand.map(c => ({ ...c, attack: (c.attack || 0) + 1 }));
+    deck = deck.map(c => ({ ...c, attack: (c.attack || 0) + 1 }));
+  }
+  if (passive?.key === 'engineering') {
+    hand = hand.map(c => ({ ...c, cost: Math.max(1, (c.cost || 1) - 1) }));
+    deck = deck.map(c => ({ ...c, cost: Math.max(1, (c.cost || 1) - 1) }));
+  }
+  if (passive?.key === 'default') {
+    hero = { ...hero, health: hero.health + 5, maxHealth: (hero.maxHealth ?? 30) + 5 };
+  }
+
+  const initialMana = passive?.key === 'management'
+    ? { current: 2, max: 2 }
+    : { current: 0, max: 0 };
+
+  return {
+    profile, hero,
+    mana: initialMana,
+    hand, deck, board: [], discard: [],
+    passive,
+    firstCardPlayedThisTurn: false,
+  };
 }
 
 export function buildInitialState(deck1, deck2, generateDeck) {

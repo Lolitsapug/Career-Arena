@@ -663,9 +663,46 @@ export default function GameBoard() {
   const myIndex = isOnline ? (state.myIndex ?? 0) : state.currentPlayer;
 
   // Listen for state updates from server
+  const prevStateRef = useRef(null);
   useEffect(() => {
     if (!isOnline) return;
-    const unsub1 = on('state-update', (newState) => setState(newState));
+    const unsub1 = on('state-update', (newState) => {
+      const prev = prevStateRef.current;
+      prevStateRef.current = newState;
+      setState(newState);
+
+      if (!prev) return;
+      const myIdx = newState.myIndex ?? 0;
+      const oppIdx = 1 - myIdx;
+
+      // Detect new minions on either side and fire summon animation
+      for (const pi of [myIdx, oppIdx]) {
+        const oldBoard = prev.players[pi]?.board || [];
+        const newBoard = newState.players[pi]?.board || [];
+        if (newBoard.length > oldBoard.length) {
+          const newMinion = newBoard[newBoard.length - 1];
+          if (newMinion && !oldBoard.find(m => m.id === newMinion.id)) {
+            setNewlyPlayed(p => { const n = new Set(p); n.add(newMinion.id); return n; });
+            setTimeout(() => setNewlyPlayed(p => { const n = new Set(p); n.delete(newMinion.id); return n; }), 500);
+            setTimeout(() => {
+              const el = document.querySelector(`[data-minion-id="${newMinion.id}"]`);
+              const pos = getCenter(el);
+              if (pos) queueAnim({ kind: 'summon', attackType: getAttackType(newMinion), x: pos.x, y: pos.y }, 0, 600);
+            }, 50);
+          }
+        }
+      }
+
+      // Detect hero health changes for flash
+      for (const pi of [myIdx, oppIdx]) {
+        const oldHealth = prev.players[pi]?.hero?.health;
+        const newHealth = newState.players[pi]?.hero?.health;
+        if (oldHealth !== undefined && newHealth !== undefined && newHealth < oldHealth) {
+          setFlashHeroes(p => { const n = new Set(p); n.add(pi); return n; });
+          setTimeout(() => setFlashHeroes(p => { const n = new Set(p); n.delete(pi); return n; }), 500);
+        }
+      }
+    });
     const unsub2 = on('opponent-disconnected', () => {
       // State will already be gameover from server
     });
@@ -863,6 +900,21 @@ export default function GameBoard() {
       return;
     }
     if (isOnline) {
+      if (card.type === 'SPELL') {
+        const abs = card.abilities || [];
+        const isHeroDmg = abs.includes('spell_damage_hero_5') || abs.includes('spell_damage_hero');
+        if (isHeroDmg) {
+          const dmg = abs.includes('spell_damage_hero_5') ? 5 : 3;
+          const casterPos = getCenter(document.querySelector(`[data-hero-idx="${me}"]`));
+          const targetPos = getCenter(document.querySelector(`[data-hero-idx="${them}"]`));
+          if (casterPos && targetPos) {
+            queueAnim({ kind: 'projectile', attackType: 'fire', startX: casterPos.x, startY: casterPos.y, endX: targetPos.x, endY: targetPos.y }, 0, 400);
+            queueAnim({ kind: 'impact', attackType: 'fire', x: targetPos.x, y: targetPos.y }, 310, 700);
+            queueAnim({ kind: 'damage-num', x: targetPos.x, y: targetPos.y - 20, amount: dmg }, 330, 900);
+          }
+          triggerFireAura();
+        }
+      }
       emitAction('play-card', { cardIndex: cardIdx });
       return;
     }
@@ -922,11 +974,21 @@ export default function GameBoard() {
       const targetPos = getCenter(targetEl);
 
       if (isBuff && isFriendly) {
-        if (!isOnline && targetPos) queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 0, 600);
+        if (targetPos) queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 0, 600);
         if (isOnline) { emitAction('resolve-spell', { targetType: 'friendly_minion', targetIdx: boardIdx }); return; }
         setState(resolveSpellTarget(state, 'friendly_minion', boardIdx));
       } else if ((isDmg || isFreeze) && !isFriendly) {
-        if (isOnline) { emitAction('resolve-spell', { targetType: 'enemy_minion', targetIdx: boardIdx }); return; }
+        if (isOnline) {
+          const casterEl = document.querySelector(`[data-hero-idx="${me}"]`);
+          const casterPos = getCenter(casterEl);
+          if (casterPos && targetPos) {
+            queueAnim({ kind: 'projectile', attackType: 'magic', startX: casterPos.x, startY: casterPos.y, endX: targetPos.x, endY: targetPos.y }, 0, 400);
+            const dmg = abs.includes('spell_damage_3') ? 3 : 2;
+            queueAnim({ kind: 'impact', attackType: 'magic', x: targetPos.x, y: targetPos.y }, 310, 600);
+            queueAnim({ kind: 'damage-num', x: targetPos.x, y: targetPos.y - 20, amount: dmg }, 330, 900);
+          }
+          emitAction('resolve-spell', { targetType: 'enemy_minion', targetIdx: boardIdx }); return;
+        }
         const ns = resolveSpellTarget(state, 'enemy_minion', boardIdx);
         const casterEl = document.querySelector(`[data-hero-idx="${me}"]`);
         const casterPos = getCenter(casterEl);
@@ -959,9 +1021,16 @@ export default function GameBoard() {
     const defender = state.players[them].board[boardIdx];
     if (!attacker || !defender) return;
 
-    if (isOnline) { emitAction('attack', { targetType: 'enemy_minion', targetIdx: boardIdx }); return; }
     const atkPos = getCenter(document.querySelector(`[data-minion-id="${attacker.id}"]`));
     const defPos = getCenter(document.querySelector(`[data-minion-id="${defender.id}"]`));
+    if (isOnline) {
+      if (atkPos && defPos) {
+        queueAnim({ kind: 'projectile', attackType: getAttackType(attacker), startX: atkPos.x, startY: atkPos.y, endX: defPos.x, endY: defPos.y }, 0, 300);
+        queueAnim({ kind: 'impact', attackType: getAttackType(attacker), x: defPos.x, y: defPos.y }, 250, 600);
+        queueAnim({ kind: 'damage-num', x: defPos.x, y: defPos.y - 20, amount: attacker.attack }, 270, 900);
+      }
+      emitAction('attack', { targetType: 'enemy_minion', targetIdx: boardIdx }); return;
+    }
     const ns = attackTarget(state, 'enemy_minion', boardIdx);
     triggerAttack(state, ns, atkPos, defPos, getAttackType(attacker), attacker.attack, false, them);
     const drawnCards = ns.players[cur].hand.length - state.players[cur].hand.length;
@@ -975,9 +1044,16 @@ export default function GameBoard() {
     if (!validTargets.hero) return;
     const attacker = state.players[me].board[state.selectedMinion.boardIdx];
     if (!attacker) return;
-    if (isOnline) { emitAction('attack', { targetType: 'enemy_hero', targetIdx: null }); return; }
     const atkPos  = getCenter(document.querySelector(`[data-minion-id="${attacker.id}"]`));
     const heroPos = getCenter(document.querySelector(`[data-hero-idx="${them}"]`));
+    if (isOnline) {
+      if (atkPos && heroPos) {
+        queueAnim({ kind: 'projectile', attackType: getAttackType(attacker), startX: atkPos.x, startY: atkPos.y, endX: heroPos.x, endY: heroPos.y }, 0, 300);
+        queueAnim({ kind: 'impact', attackType: getAttackType(attacker), x: heroPos.x, y: heroPos.y }, 250, 600);
+        queueAnim({ kind: 'damage-num', x: heroPos.x, y: heroPos.y - 20, amount: attacker.attack }, 270, 900);
+      }
+      emitAction('attack', { targetType: 'enemy_hero', targetIdx: null }); return;
+    }
     const ns = attackTarget(state, 'enemy_hero', null);
     triggerAttack(state, ns, atkPos, heroPos, getAttackType(attacker), attacker.attack, true, them);
     setState(ns);

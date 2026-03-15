@@ -313,6 +313,7 @@ export function startTurn(state) {
     frozen: false, // frozen lasts only one turn
   }));
 
+  s.phase = 'play';
   s.selectedMinion = null;
   s.pendingSpell = null;
   s.log = [`[Turn ${s.turn}] ${s.players[pi].hero.name}'s turn begins.`];

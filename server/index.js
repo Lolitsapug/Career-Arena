@@ -5,6 +5,7 @@ import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
+import os from 'os'
 import { scrapeLinkedIn } from './scraper.js'
 import { generateDeckFromProfile } from './gemini.js'
 import { initGameSocket } from './gameLoop.js'
@@ -54,6 +55,14 @@ app.post('/api/generate-deck', async (req, res) => {
 })
 
 app.get('/api/health', (_, res) => res.json({ ok: true }))
+
+// Serve downloaded profile pictures
+app.get('/api/images/:filename', (req, res) => {
+  const imgPath = join(os.tmpdir(), 'career-arena-images', req.params.filename)
+  res.sendFile(imgPath, err => {
+    if (err) res.status(404).json({ error: 'Image not found' })
+  })
+})
 
 // ── Production: serve Vite build output ──────────────────────────────────────
 

@@ -165,6 +165,23 @@ export async function scrapeLinkedIn(profileUrl) {
       }
     })
 
+    // Download profile picture locally so the browser can display it
+    if (profileData.profilePictureUrl) {
+      try {
+        const imgResponse = await page.goto(profileData.profilePictureUrl)
+        const imgBuffer = await imgResponse.buffer()
+        const imgId = `profile_${Date.now()}.jpg`
+        const imgDir = path.join(os.tmpdir(), 'career-arena-images')
+        fs.mkdirSync(imgDir, { recursive: true })
+        const imgPath = path.join(imgDir, imgId)
+        fs.writeFileSync(imgPath, imgBuffer)
+        profileData.profilePictureUrl = `/api/images/${imgId}`
+        console.log('[scraper] Saved profile picture:', imgPath)
+      } catch (e) {
+        console.log('[scraper] Could not download profile picture:', e.message)
+      }
+    }
+
     console.log('[scraper] Scraped name:', profileData.name || '(not found)')
     return JSON.stringify(profileData)
   } finally {

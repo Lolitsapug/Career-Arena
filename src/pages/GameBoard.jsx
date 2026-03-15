@@ -91,6 +91,7 @@ function geminiCardToGameCard(card) {
     maxHealth: health,
     description,
     abilities,
+    rarity: card.rarity || (abilities.length >= 2 ? 'legendary' : abilities.length === 1 ? 'rare' : 'common'),
     hasDivineShield: abilities.includes('divine_shield'),
     canAttack: false,
     attacksAvailable: 0,
@@ -370,13 +371,18 @@ const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, is
 
   return (
     <div
-      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''} ${cantAfford ? 'cant-afford' : ''}`}
+      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''} ${cantAfford ? 'cant-afford' : ''} rarity-${card.rarity || 'common'}`}
+      data-rarity={card.rarity || 'common'}
       onClick={onClick}
       onContextMenu={e => { e.preventDefault(); onInspect(card); }}
     >
       <div className="card-cost">{card.cost}</div>
-      <div className="card-art">{card.type === 'SPELL' ? '✨' : getArt(card)}</div>
-      <div className="card-name">{card.name}</div>
+      <div className="card-art-frame">
+        <div className="card-art">{card.type === 'SPELL' ? '✨' : getArt(card)}</div>
+      </div>
+      <div className="card-name-banner">
+        <div className="card-name">{card.name}</div>
+      </div>
 
       {card.type === 'SPELL' ? (
         <div className="spell-text-body">
@@ -420,8 +426,9 @@ const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, is
 
       {card.type === 'MINION' && (
         <div className="card-stats">
-          <span className="card-attack">⚔{card.attack}</span>
-          <span className="card-health">❤{card.health}</span>
+          <span className="card-attack">{card.attack}</span>
+          <span className="card-rarity-gem" />
+          <span className="card-health">{card.health}</span>
         </div>
       )}
     </div>
@@ -434,7 +441,8 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
   return (
     <div
       data-minion-id={minion.id}
-      className={`board-minion
+      data-rarity={minion.rarity || 'common'}
+      className={`board-minion rarity-${minion.rarity || 'common'}
         ${isSelected       ? 'selected-attacker' : ''}
         ${isValidTarget    ? 'valid-target'       : ''}
         ${canAttack        ? 'can-attack'         : ''}
@@ -453,8 +461,12 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
       {minion.abilities?.includes('taunt') && <div className="taunt-shield" />}
       {minion.hasDivineShield && <div className="divine-aura" />}
       {minion.stealthed && <div className="stealth-icon">👁</div>}
-      <div className="minion-art">{getArt(minion)}</div>
-      <div className="minion-name">{minion.name}</div>
+      <div className="minion-art-frame">
+        <div className="minion-art">{getArt(minion)}</div>
+      </div>
+      <div className="minion-name-banner">
+        <div className="minion-name">{minion.name}</div>
+      </div>
       {abilities.length > 0 && (
         <div className="minion-ability-badges">
           {abilities.map(a => (
@@ -466,8 +478,8 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
         </div>
       )}
       <div className="minion-stats">
-        <span className={`stat-attack ${isBuffed ? 'stat-buffed' : ''}`}>⚔{minion.attack}</span>
-        <span className={`stat-health ${minion.damaged ? 'damaged' : ''} ${isBuffed ? 'stat-buffed' : ''}`}>❤{minion.health}</span>
+        <span className={`stat-attack ${isBuffed ? 'stat-buffed' : ''}`}>{minion.attack}</span>
+        <span className={`stat-health ${minion.damaged ? 'damaged' : ''} ${isBuffed ? 'stat-buffed' : ''}`}>{minion.health}</span>
       </div>
       {isExhausted && <div className="exhausted-overlay" />}
     </div>

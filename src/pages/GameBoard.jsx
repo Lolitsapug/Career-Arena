@@ -806,9 +806,10 @@ export default function GameBoard() {
   const spellTargets = getSpellTargets(state);
 
   const handlePlayCard = useCallback((cardIdx) => {
-    if (isOnline && !isMyTurn) return;
+    console.log('[handlePlayCard]', { cardIdx, isOnline, isMyTurn, me, currentPlayer: state.currentPlayer, phase: state.phase, handLen: state.players[me]?.hand?.length });
+    if (isOnline && !isMyTurn) { console.log('[handlePlayCard] BLOCKED: not my turn'); return; }
     const card = state.players[me].hand[cardIdx];
-    if (!card) return;
+    if (!card) { console.log('[handlePlayCard] BLOCKED: no card at index', cardIdx); return; }
     if (state.players[me].mana.current < card.cost) {
       setCantAffordId(card.id);
       setTimeout(() => setCantAffordId(null), 600);

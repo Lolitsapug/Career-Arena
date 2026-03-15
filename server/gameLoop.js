@@ -115,19 +115,29 @@ export function initGameSocket(io) {
 
     socket.on('game-action', ({ code, action, payload }) => {
       const room = getRoom(code);
-      if (!room || !room.gameState) return;
+      if (!room || !room.gameState) {
+        console.log(`[game-action] No room or no gameState for code=${code}`);
+        return;
+      }
 
       const playerIdx = getPlayerIndex(room, socket.id);
-      if (playerIdx === -1) return;
+      if (playerIdx === -1) {
+        console.log(`[game-action] Player not found for socket=${socket.id}`);
+        return;
+      }
 
       let state = room.gameState;
 
       // Only the current player can take most actions
       const isMyTurn = state.currentPlayer === playerIdx;
+      console.log(`[game-action] action=${action} playerIdx=${playerIdx} currentPlayer=${state.currentPlayer} isMyTurn=${isMyTurn} phase=${state.phase}`);
 
       switch (action) {
         case 'play-card': {
-          if (!isMyTurn || state.phase !== 'play') return;
+          if (!isMyTurn || state.phase !== 'play') {
+            console.log(`[play-card] BLOCKED: isMyTurn=${isMyTurn} phase=${state.phase}`);
+            return;
+          }
           const { state: ns } = playCard(state, payload.cardIndex);
           state = ns;
           break;

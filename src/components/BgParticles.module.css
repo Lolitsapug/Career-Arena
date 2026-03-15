@@ -14,8 +14,8 @@
   position: absolute;
   left: var(--x);
   bottom: -80px;
-  width: 50px;
-  height: 70px;
+  width: 44px;
+  height: 62px;
   border-radius: 6px;
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
@@ -23,10 +23,23 @@
   animation: particleFloat var(--dur, 10s) ease-in-out var(--delay, 0s) infinite;
   will-change: transform, opacity;
 }
+.particle::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  opacity: 0.15;
+}
 
 @keyframes particleFloat {
   0%   { transform: translateY(0) rotate(0deg);   opacity: 0; }
-  10%  { opacity: 0.18; }
-  90%  { opacity: 0.18; }
+  8%   { opacity: 0.12; }
+  50%  { opacity: 0.16; }
+  92%  { opacity: 0.12; }
   100% { transform: translateY(-130vh) rotate(var(--rot, 25deg)); opacity: 0; }
 }

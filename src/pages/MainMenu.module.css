@@ -47,14 +47,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.8rem;
   padding: 2.5rem 2rem;
   border-right: 1px solid var(--border-subtle);
   background: var(--main-menu-left-glow);
+  position: relative;
+}
+.left::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: 0;
+  width: 1px;
+  height: 80%;
+  background: linear-gradient(180deg, transparent, var(--accent-primary), transparent);
+  opacity: 0.3;
 }
 
 .logo {
   text-align: center;
+  position: relative;
+}
+.logo::before {
+  content: '⚔';
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 0.3rem;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 8px var(--accent-primary));
 }
 
 .themeSwitcher {
@@ -115,16 +135,24 @@
 }
 
 .title {
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-family: var(--font-display);
   color: var(--text-primary);
   text-shadow: var(--title-glow);
-  letter-spacing: 0.05em;
-  margin-bottom: 0.4rem;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(180deg, var(--text-primary) 40%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .tagline {
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 /* ── Player slots ── */
@@ -138,11 +166,13 @@
 
 .vsChip {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-dim);
-  letter-spacing: 0.15em;
-  padding: 4px 0;
+  color: var(--accent-primary);
+  letter-spacing: 0.2em;
+  padding: 6px 0;
+  text-shadow: 0 0 12px var(--accent-primary);
+  opacity: 0.8;
 }
 
 .slot {
@@ -150,21 +180,28 @@
   border-radius: 10px;
   border: 1px solid var(--border-subtle);
   background: var(--bg-surface);
-  transition: border-color 200ms, box-shadow 200ms;
+  transition: border-color 200ms, box-shadow 200ms, transform 200ms;
   overflow: hidden;
+}
+.slot:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 
 .slotFilled {
   border-color: var(--accent-success);
   box-shadow: 0 0 12px rgba(16, 185, 129, 0.12);
+  background: linear-gradient(135deg, var(--bg-surface), rgba(16,185,129,0.04));
 }
 
 .slotLabel {
   font-size: 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
+  letter-spacing: 0.14em;
+  color: var(--accent-primary);
   padding: 8px 14px 0;
+  font-weight: 700;
+  opacity: 0.7;
 }
 
 .slotEmpty {
@@ -185,21 +222,23 @@
 .slotEmpty:hover { color: var(--accent-primary); }
 
 .slotPlus {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1.5px dashed var(--border-subtle);
+  border: 2px dashed var(--border-subtle);
   display: grid;
   place-items: center;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: var(--text-dim);
   flex-shrink: 0;
-  transition: border-color 150ms, color 150ms;
+  transition: border-color 200ms, color 200ms, background 200ms, transform 200ms;
 }
 
 .slotEmpty:hover .slotPlus {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+  background: rgba(201,162,39,0.08);
+  transform: scale(1.1);
 }
 
 .slotDeck {
@@ -270,6 +309,7 @@
   padding: 2rem;
   min-height: 100vh;
   overflow-y: auto;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.15) 100%);
 }
 
 .libraryHeader {
@@ -280,8 +320,14 @@
 }
 
 .libraryTitle {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  font-family: var(--font-display);
   color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+.libraryTitle::before {
+  content: '📚 ';
+  font-size: 1rem;
 }
 
 .importBtn {
@@ -290,14 +336,19 @@
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1.1rem;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-  transition: filter 150ms, transform 100ms;
+  transition: filter 150ms, transform 150ms, box-shadow 150ms;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.importBtn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.importBtn:hover {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
 
 .clearAllBtn {
   background: transparent;
@@ -320,10 +371,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   text-align: center;
   color: var(--text-dim);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  padding: 3rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+.emptyLibrary::before {
+  content: '🃏';
+  font-size: 2.5rem;
+  opacity: 0.4;
+  margin-bottom: 0.5rem;
 }
 
 /* Deck list */
@@ -342,17 +403,20 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   cursor: pointer;
-  transition: border-color 150ms, background 150ms;
+  transition: border-color 200ms, background 200ms, transform 200ms, box-shadow 200ms;
   position: relative;
 }
 
 .deckCard:hover {
   background: var(--bg-raised);
   border-color: var(--accent-primary);
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 var(--accent-primary), 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .deckInUse {
   border-color: var(--accent-success);
+  box-shadow: -4px 0 0 var(--accent-success);
 }
 
 .deckInfo {
@@ -568,15 +632,16 @@
 /* ── Watermark ── */
 .watermark {
   position: fixed;
-  bottom: 10px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   color: var(--text-dim);
-  opacity: 0.45;
+  opacity: 0.35;
   pointer-events: none;
   white-space: nowrap;
   z-index: 10;
+  letter-spacing: 0.05em;
 }
 
 /* Responsive: stack on small screens */

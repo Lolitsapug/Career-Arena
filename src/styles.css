@@ -921,6 +921,45 @@ body {
   border-color: #a855f7;
   box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 0 14px rgba(168,85,247,0.5), 0 4px 12px rgba(0,0,0,0.6);
 }
+
+/* ── Hand card: Taunt (stone gray-brown) ── */
+.hand-card.card-taunt {
+  background: linear-gradient(180deg, #e8dcc8, #c4b494);
+  border-color: #8b7355;
+}
+.hand-card.card-taunt .card-name { color: #3b2e1a; }
+.hand-card.card-taunt .card-ability-row-text { color: #4a3c28; }
+.hand-card.card-taunt .card-ability-row { background: rgba(139,115,85,0.15); }
+.hand-card.can-play.card-taunt {
+  border-color: #a08860;
+  box-shadow: 0 0 14px rgba(160,136,96,0.5), 0 4px 12px rgba(0,0,0,0.6);
+}
+
+/* ── Hand card: Divine Shield (golden white) ── */
+.hand-card.card-divine {
+  background: linear-gradient(180deg, #fef9e7, #f5e6a8);
+  border-color: #d4a017;
+}
+.hand-card.card-divine .card-name { color: #6b4f00; }
+.hand-card.card-divine .card-ability-row-text { color: #5a4200; }
+.hand-card.card-divine .card-ability-row { background: rgba(212,160,23,0.12); }
+.hand-card.can-play.card-divine {
+  border-color: #f0c842;
+  box-shadow: 0 0 14px rgba(240,200,66,0.6), 0 4px 12px rgba(0,0,0,0.6);
+}
+
+/* ── Hand card: Deathrattle (teal green) ── */
+.hand-card.card-deathrattle {
+  background: linear-gradient(180deg, #d0ece8, #a4d4cc);
+  border-color: #2d8f7b;
+}
+.hand-card.card-deathrattle .card-name { color: #1a4a40; }
+.hand-card.card-deathrattle .card-ability-row-text { color: #1e524a; }
+.hand-card.card-deathrattle .card-ability-row { background: rgba(45,143,123,0.12); }
+.hand-card.can-play.card-deathrattle {
+  border-color: #3bb89e;
+  box-shadow: 0 0 14px rgba(59,184,158,0.5), 0 4px 12px rgba(0,0,0,0.6);
+}
 .spell-text-body {
   flex: 1;
   display: flex;
@@ -1344,6 +1383,18 @@ body {
 }
 
 /* Shield indicator for taunt minions */
+/* ── Board minion: Deathrattle tint ── */
+.board-minion.has-deathrattle {
+  background: linear-gradient(180deg, #1a3f38, #0e2a25);
+  border-color: #2d8f7b;
+}
+.board-minion.has-deathrattle .minion-name { color: #80dcc8; }
+
+/* ── Board minion: Divine Shield tint ── */
+.board-minion.has-divine {
+  background: linear-gradient(180deg, #3a3520, #2a2510);
+}
+
 .board-minion.has-taunt {
   border-color: #fbbf24;
   box-shadow: 0 0 0 2px #fbbf24, 0 0 18px rgba(251,191,36,0.9), 0 0 36px rgba(251,191,36,0.5), 0 4px 12px rgba(0,0,0,0.6);
@@ -3809,6 +3860,60 @@ body {
   font-size: 0.42rem;
   line-height: 1.4;
 }
+
+/* ── Pixel: Taunt hand cards (stone brown) ── */
+:root[data-theme='pixel'] .hand-card.card-taunt {
+  background: #2e2418;
+  border-color: #a08050;
+}
+:root[data-theme='pixel'] .hand-card.card-taunt .card-name { color: #e0c890; }
+:root[data-theme='pixel'] .hand-card.card-taunt .card-art { background: #1e1810; border-color: #604830; }
+:root[data-theme='pixel'] .hand-card.card-taunt .card-ability-row { background: rgba(30,24,16,0.8); border-color: #604830; }
+:root[data-theme='pixel'] .hand-card.card-taunt .card-ability-row-text { color: #d0c0a0; }
+:root[data-theme='pixel'] .hand-card.can-play.card-taunt {
+  border-color: #c0a060;
+  box-shadow: 0 0 0 2px #c0a060, 3px 3px 0 #0a0a1a;
+}
+
+/* ── Pixel: Divine Shield hand cards (bright gold) ── */
+:root[data-theme='pixel'] .hand-card.card-divine {
+  background: #302808;
+  border-color: #f0d060;
+}
+:root[data-theme='pixel'] .hand-card.card-divine .card-name { color: #ffe878; }
+:root[data-theme='pixel'] .hand-card.card-divine .card-art { background: #201c04; border-color: #806820; }
+:root[data-theme='pixel'] .hand-card.card-divine .card-ability-row { background: rgba(32,28,4,0.8); border-color: #806820; }
+:root[data-theme='pixel'] .hand-card.card-divine .card-ability-row-text { color: #e8d890; }
+:root[data-theme='pixel'] .hand-card.can-play.card-divine {
+  border-color: #ffe878;
+  box-shadow: 0 0 0 2px #ffe878, 3px 3px 0 #0a0a1a;
+}
+
+/* ── Pixel: Deathrattle hand cards (teal) ── */
+:root[data-theme='pixel'] .hand-card.card-deathrattle {
+  background: #0e2a25;
+  border-color: #40b098;
+}
+:root[data-theme='pixel'] .hand-card.card-deathrattle .card-name { color: #80f0d8; }
+:root[data-theme='pixel'] .hand-card.card-deathrattle .card-art { background: #081e18; border-color: #28705c; }
+:root[data-theme='pixel'] .hand-card.card-deathrattle .card-ability-row { background: rgba(8,30,24,0.8); border-color: #28705c; }
+:root[data-theme='pixel'] .hand-card.card-deathrattle .card-ability-row-text { color: #a0e0d0; }
+:root[data-theme='pixel'] .hand-card.can-play.card-deathrattle {
+  border-color: #60d8b8;
+  box-shadow: 0 0 0 2px #60d8b8, 3px 3px 0 #0a0a1a;
+}
+
+/* ── Pixel: Board minion ability tints ── */
+:root[data-theme='pixel'] .board-minion.has-taunt {
+  background: linear-gradient(180deg, #2e2418, #1e1810);
+  border-color: #a08050;
+}
+:root[data-theme='pixel'] .board-minion.has-taunt .minion-name { color: #e0c890; }
+:root[data-theme='pixel'] .board-minion.has-deathrattle {
+  background: linear-gradient(180deg, #0e2a25, #081e18);
+  border-color: #40b098;
+}
+:root[data-theme='pixel'] .board-minion.has-deathrattle .minion-name { color: #80f0d8; }
 
 /* Card back (opponent hand) */
 :root[data-theme='pixel'] .hand-card--back {

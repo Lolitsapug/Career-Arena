@@ -1496,6 +1496,25 @@ body {
   border-color: rgba(201,162,39,0.4);
 }
 
+.theme-cycle-btn {
+  margin-top: 0.35rem;
+  padding: 0.3rem 0;
+  width: var(--endturn-btn-w);
+  font-size: 0.62rem;
+  font-family: var(--font-base);
+  font-weight: 500;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-dim);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.theme-cycle-btn:hover {
+  background: rgba(201,162,39,0.12);
+  color: var(--gold);
+  border-color: rgba(201,162,39,0.4);
+}
 
 /* ── Action Hints ─────────────────────────────────────────────────────────── */
 .action-hint {
@@ -3709,12 +3728,20 @@ body {
 }
 
 /* ── Pixel: Scale toggle ── */
-:root[data-theme='pixel'] .scale-toggle-btn {
+:root[data-theme='pixel'] .scale-toggle-btn,
+:root[data-theme='pixel'] .theme-cycle-btn {
   font-family: 'Press Start 2P', monospace;
+  font-size: 0.35rem;
   background: #2a2a4a;
   border: 2px solid #606080;
   color: #a0a8b8;
   box-shadow: 2px 2px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .scale-toggle-btn:hover,
+:root[data-theme='pixel'] .theme-cycle-btn:hover {
+  background: #3a3a5a;
+  border-color: #f0d060;
+  color: #f0d060;
 }
 
 /* ── Pixel: Ambience - Falling pixels ── */

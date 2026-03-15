@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState, useCallback, useEffect, useMemo, useRef, memo } from 'react';
-import { useTheme } from '../theme.jsx';
+import { useTheme, THEME_OPTIONS } from '../theme.jsx';
 import BgParticles from '../components/BgParticles';
 import {
   endTurn, beginNewTurn, playCard, selectMinion,
@@ -705,6 +705,13 @@ export default function GameBoard() {
     setScale(next);
   }
 
+  const { theme, setTheme } = useTheme();
+  function cycleTheme() {
+    const idx = THEME_OPTIONS.findIndex(t => t.id === theme);
+    const next = THEME_OPTIONS[(idx + 1) % THEME_OPTIONS.length];
+    setTheme(next.id);
+  }
+
   function queueAnim(animObj, delay = 0, duration = 700) {
     const id = makeId();
     setTimeout(() => {
@@ -1119,6 +1126,9 @@ export default function GameBoard() {
         {state.pendingBattlecryTarget && <button className="cancel-btn" onClick={() => setState(s => ({ ...s, pendingBattlecryTarget: null }))}>Skip</button>}
         <button className="scale-toggle-btn" onClick={toggleScale} title="Cycle display scale">
           {scale === 'sm' ? '🔍 1080p' : scale === 'md' ? '🔎 1200p' : '🔭 1440p'}
+        </button>
+        <button className="theme-cycle-btn" onClick={cycleTheme} title="Change theme">
+          🎨 {THEME_OPTIONS.find(t => t.id === theme)?.label}
         </button>
       </div>
 

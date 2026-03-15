@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=MedievalSharp&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&family=MedievalSharp&family=Press+Start+2P&display=swap');
 
 /* ── Reset & Base ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -195,6 +195,49 @@
   --theme-toggle-active-bg: rgba(10,102,194,0.15);
   --theme-toggle-active-border: rgba(10,102,194,0.5);
   --theme-toggle-active-text: #0a66c2;
+}
+
+:root[data-theme='pixel'] {
+  color-scheme: dark;
+  --font-base: 'Press Start 2P', monospace;
+  --font-display: 'Press Start 2P', monospace;
+  --board-bg:      #1a1a2e;
+  --board-felt:    #1a1a2e;
+  --gold:          #f0d060;
+  --gold-light:    #ffe878;
+  --green-glow:    #40e040;
+  --red-glow:      #f04040;
+  --blue-glow:     #4090f0;
+  --purple-glow:   #c060f0;
+  --card-bg:       #2a2a4a;
+  --card-border:   #f0d060;
+  --minion-bg:     #16213e;
+  --mana-full:     #4090f0;
+  --mana-empty:    #1a1a2e;
+  --hero-bg:       linear-gradient(180deg, #2a2a4a, #16213e);
+  --shadow-gold:   0 0 0 2px #f0d060;
+  --text-light:    #e8e8e8;
+  --text-dim:      #808898;
+  --bg-deep:       #0a0a1a;
+  --bg-surface:    rgba(26,26,46,0.95);
+  --bg-raised:     rgba(42,42,74,0.95);
+  --border-subtle: rgba(240,208,96,0.3);
+  --text-primary:  #e8e8e8;
+  --text-muted:    #a0a8b8;
+  --accent-primary:#f0d060;
+  --accent-secondary:#4090f0;
+  --accent-gold:   #f0d060;
+  --accent-success:#40e040;
+  --accent-danger: #f04040;
+  --title-glow: 0 0 20px rgba(240,208,96,0.6), 0 0 40px rgba(240,208,96,0.2);
+  --main-menu-left-glow: radial-gradient(ellipse at 40% 60%, rgba(240,208,96,0.06) 0%, transparent 70%);
+  --badge-primary-bg: rgba(240,208,96,0.2);
+  --badge-secondary-bg: rgba(64,144,240,0.2);
+  --button-secondary-hover-bg: rgba(64,144,240,0.15);
+  --theme-toggle-highlight: rgba(255,255,255,0.05);
+  --theme-toggle-active-bg: rgba(240,208,96,0.2);
+  --theme-toggle-active-border: rgba(240,208,96,0.5);
+  --theme-toggle-active-text: #f0d060;
 }
 
 :root[data-theme='light'] {
@@ -3095,6 +3138,602 @@ body {
 }
 :root[data-theme='linkedin'] .go-forfeit-note {
   color: rgba(204,16,22,0.7);
+}
+
+/* ── Pixel Theme Overrides ─────────────────────────────────────────────────── */
+
+/* Global pixel rendering */
+:root[data-theme='pixel'] {
+  image-rendering: pixelated;
+}
+:root[data-theme='pixel'] * {
+  border-radius: 0 !important;
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+/* Restore border-radius for hero portraits only (they're circular images) */
+:root[data-theme='pixel'] .hero-portrait,
+:root[data-theme='pixel'] .hero-portrait img {
+  border-radius: 0 !important;
+}
+
+/* Board area: pixel grid texture */
+:root[data-theme='pixel'] .board-area {
+  background:
+    url('./images/pixel-texture.svg') repeat,
+    #1a1a2e;
+  background-size: 32px 32px;
+  border-top: 4px solid #f0d060;
+  border-bottom: 4px solid #f0d060;
+  box-shadow: inset 0 4px 0 #0a0a1a, inset 0 -4px 0 #0a0a1a;
+}
+
+/* Board divider: pixelated sword line */
+:root[data-theme='pixel'] .board-divider {
+  height: 4px;
+  background: #f0d060;
+  box-shadow: 0 2px 0 #0a0a1a, 0 -2px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-divider::before {
+  display: none;
+}
+
+/* Hero cups */
+:root[data-theme='pixel'] .board-hero-cup {
+  background: linear-gradient(180deg, #2a2a4a 0%, #16213e 100%);
+  border: 4px solid #f0d060;
+  box-shadow: 0 0 0 2px #0a0a1a, 0 4px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-hero-cup .hero-portrait {
+  border: 2px solid #808898 !important;
+}
+
+/* Minion rows */
+:root[data-theme='pixel'] .opponent-row {
+  background: none;
+}
+:root[data-theme='pixel'] .player-row {
+  background: none;
+}
+
+/* Sidebars */
+:root[data-theme='pixel'] .board-side {
+  background:
+    url('./images/pixel-texture.svg') repeat,
+    linear-gradient(180deg, #0e0e20 0%, #12122a 40%, #12122a 60%, #0e0e20 100%);
+  background-size: 32px 32px, 100% 100%;
+}
+:root[data-theme='pixel'] .board-side::before {
+  display: none;
+}
+
+/* End turn zone */
+:root[data-theme='pixel'] .end-turn-zone {
+  background:
+    url('./images/pixel-texture.svg') repeat,
+    linear-gradient(180deg, #0e0e20 0%, #12122a 40%, #12122a 60%, #0e0e20 100%);
+  background-size: 32px 32px, 100% 100%;
+  border-left: 4px solid #f0d060;
+  border-image: none;
+  box-shadow: inset 4px 0 0 #0a0a1a;
+}
+
+/* End turn button: chunky pixel button */
+:root[data-theme='pixel'] .end-turn-btn {
+  background: #40e040;
+  color: #0a0a1a;
+  border: 4px solid #208020;
+  box-shadow: 4px 4px 0 #0a0a1a, inset 0 -4px 0 #208020;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  text-shadow: none;
+  padding: 0.8rem 0;
+}
+:root[data-theme='pixel'] .end-turn-btn:hover:not(:disabled) {
+  background: #60ff60;
+  box-shadow: 4px 4px 0 #0a0a1a, inset 0 -4px 0 #30a030;
+  transform: translateY(-2px);
+}
+:root[data-theme='pixel'] .end-turn-btn:disabled {
+  background: #2a2a4a;
+  color: #606080;
+  border-color: #404060;
+  box-shadow: 4px 4px 0 #0a0a1a, inset 0 -4px 0 #1a1a3a;
+}
+
+/* Player name labels */
+:root[data-theme='pixel'] .player-name-label {
+  background: rgba(10,10,26,0.92);
+  border: 2px solid #f0d060;
+  color: #ffe878;
+  font-size: 0.4rem;
+  padding: 6px 12px;
+  text-transform: uppercase;
+  font-family: 'Press Start 2P', monospace;
+  text-shadow: 1px 1px 0 #0a0a1a;
+  line-height: 1.4;
+}
+
+/* Turn counter */
+:root[data-theme='pixel'] .sidebar-turn-label {
+  color: #f0d060;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  text-shadow: 2px 2px 0 #0a0a1a;
+}
+
+/* ── Pixel: Hand cards ── */
+:root[data-theme='pixel'] .hand-card {
+  background: #2a2a4a;
+  border: 3px solid #f0d060;
+  box-shadow: 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .hand-card .card-name {
+  color: #ffe878;
+  font-size: 0.38rem;
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+  text-shadow: 1px 1px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .hand-card .card-cost {
+  background: #4090f0;
+  color: #ffffff;
+  border: 2px solid #2060b0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  box-shadow: 2px 2px 0 #0a0a1a;
+  text-shadow: 1px 1px 0 #2060b0;
+}
+:root[data-theme='pixel'] .hand-card .card-art {
+  background: #16213e;
+  border: 2px solid #404060;
+  font-size: 1.8rem;
+}
+:root[data-theme='pixel'] .hand-card .card-stats {
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .hand-card .card-attack {
+  color: #f0d060;
+  font-size: 0.55rem;
+  text-shadow: 1px 1px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .hand-card .card-health {
+  color: #f04040;
+  font-size: 0.55rem;
+  text-shadow: 1px 1px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .hand-card.can-play {
+  border-color: #40e040;
+  box-shadow: 0 0 0 2px #40e040, 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .hand-card.cant-afford .card-cost {
+  background: #f04040;
+  border-color: #a02020;
+}
+/* Ability rows on cards — use Inter for readability, pixel colors */
+:root[data-theme='pixel'] .hand-card .card-ability-row {
+  font-size: 0.42rem;
+  background: rgba(22,33,62,0.8);
+  border: 1px solid #404060;
+}
+:root[data-theme='pixel'] .hand-card .card-ability-row-text {
+  color: #c8d0e0;
+  font-size: 0.42rem;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+}
+:root[data-theme='pixel'] .hand-card .card-ability-row-text strong {
+  color: #ffe878;
+  font-weight: 700;
+}
+:root[data-theme='pixel'] .hand-card .card-ability-row-icon {
+  font-size: 0.6rem;
+}
+/* ── Pixel: Spell cards ── */
+:root[data-theme='pixel'] .hand-card.spell-card {
+  background: #301848;
+  border: 3px solid #c060f0;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  clip-path: polygon(
+    0 8px, 8px 0, calc(100% - 8px) 0, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px)
+  );
+}
+:root[data-theme='pixel'] .hand-card.can-play.spell-card {
+  border-color: #d880ff;
+  box-shadow: 0 0 0 2px #d880ff, 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .hand-card.spell-card .card-cost {
+  background: #c060f0;
+  border-color: #8030b0;
+  text-shadow: 1px 1px 0 #8030b0;
+}
+:root[data-theme='pixel'] .hand-card.spell-card .card-name {
+  color: #e0b0ff;
+}
+:root[data-theme='pixel'] .hand-card.spell-card .card-art {
+  background: #200e30;
+  border-color: #604080;
+}
+/* Spell text */
+:root[data-theme='pixel'] .spell-text-body {
+  font-size: 0.38rem;
+}
+:root[data-theme='pixel'] .spell-text-block {
+  background: rgba(48,24,72,0.8);
+  border: 1px solid #604080;
+}
+:root[data-theme='pixel'] .spell-ability-name {
+  color: #e0b0ff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.32rem;
+  text-shadow: 1px 1px 0 #200e30;
+}
+:root[data-theme='pixel'] .spell-ability-desc {
+  color: #d0c0e0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.42rem;
+  line-height: 1.4;
+}
+
+/* Card back (opponent hand) */
+:root[data-theme='pixel'] .hand-card--back {
+  background: repeating-linear-gradient(
+    45deg,
+    #2a2a4a,
+    #2a2a4a 4px,
+    #22224a 4px,
+    #22224a 8px
+  );
+  border: 3px solid #808898;
+  box-shadow: 3px 3px 0 #0a0a1a;
+}
+
+/* ── Pixel: Board minions ── */
+:root[data-theme='pixel'] .board-minion {
+  background: linear-gradient(180deg, #2a2a4a, #1a1a3a);
+  border: 3px solid #606080;
+  box-shadow: 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-minion .minion-name {
+  color: #ffe878;
+  font-size: 0.35rem;
+  font-family: 'Press Start 2P', monospace;
+  text-shadow: 1px 1px 0 #0a0a1a;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+:root[data-theme='pixel'] .board-minion .minion-art {
+  background: #16213e;
+}
+:root[data-theme='pixel'] .board-minion .stat-attack {
+  color: #f0d060;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  text-shadow: 2px 2px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-minion .stat-health {
+  color: #f04040;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  text-shadow: 2px 2px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-minion .stat-health.damaged {
+  color: #ff6060;
+  text-shadow: 0 0 6px rgba(255,96,96,0.8), 2px 2px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-minion .minion-ability-badge {
+  background: rgba(22,33,62,0.9);
+  border: 1px solid #404060;
+  padding: 2px 4px;
+}
+:root[data-theme='pixel'] .board-minion .minion-ability-badge-icon {
+  font-size: 0.6rem;
+}
+:root[data-theme='pixel'] .board-minion .minion-ability-badge-label {
+  color: #c8d0e0;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.45rem;
+  line-height: 1.2;
+}
+
+/* ── Pixel: Mana crystals ── */
+:root[data-theme='pixel'] .mana-crystal.full {
+  background: #4090f0;
+  border: 2px solid #2060b0;
+  box-shadow: 0 0 8px rgba(64,144,240,0.6), 2px 2px 0 #0a0a1a;
+  transform: rotate(45deg);
+}
+:root[data-theme='pixel'] .mana-crystal.empty {
+  background: #1a1a3a;
+  border: 2px solid #404060;
+  box-shadow: inset 0 0 0 1px #0a0a1a;
+  transform: rotate(45deg);
+}
+:root[data-theme='pixel'] .mana-text {
+  color: #80b8ff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  text-shadow: 1px 1px 0 #0a0a1a;
+}
+
+/* ── Pixel: Hero health ── */
+:root[data-theme='pixel'] .hero-health {
+  background: #f04040;
+  border: 3px solid #a02020;
+  box-shadow: 2px 2px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.55rem;
+  text-shadow: 1px 1px 0 #a02020;
+}
+:root[data-theme='pixel'] .hero-health .hp-number {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+}
+
+/* ── Pixel: Taunt ── */
+:root[data-theme='pixel'] .board-minion.has-taunt {
+  border-color: #f0d060;
+  box-shadow: 0 0 0 3px #f0d060, 4px 4px 0 #0a0a1a;
+  background: linear-gradient(180deg, #3a3a5a, #2a2a4a);
+}
+:root[data-theme='pixel'] .taunt-shield {
+  background: linear-gradient(180deg, rgba(240,208,96,0.2), rgba(240,208,96,0.08));
+  border: 2px solid rgba(240,208,96,0.4);
+}
+:root[data-theme='pixel'] .board-minion.has-taunt.can-attack {
+  box-shadow: 0 0 0 3px #ffe878, 0 0 12px rgba(240,208,96,0.5), 4px 4px 0 #0a0a1a;
+}
+
+/* ── Pixel: Can attack ── */
+:root[data-theme='pixel'] .board-minion.can-attack {
+  border-color: #40e040;
+  box-shadow: 0 0 0 2px #40e040, 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .board-minion.can-attack:hover {
+  box-shadow: 0 0 0 2px #60ff60, 0 0 12px rgba(64,224,64,0.4), 3px 3px 0 #0a0a1a;
+}
+
+/* ── Pixel: Divine shield ── */
+:root[data-theme='pixel'] .divine-aura {
+  border: 3px solid #f0d060;
+  box-shadow: 0 0 0 2px #f0d060, 0 0 16px rgba(240,208,96,0.5);
+  background: rgba(240,208,96,0.06);
+}
+
+/* ── Pixel: Valid target ── */
+:root[data-theme='pixel'] .board-minion.valid-target {
+  border-color: #f04040;
+  box-shadow: 0 0 0 2px #f04040, 0 0 8px rgba(240,64,64,0.5);
+}
+:root[data-theme='pixel'] .board-minion.has-taunt.valid-target {
+  box-shadow: 0 0 0 3px #f04040, 0 0 12px rgba(240,64,64,0.6);
+}
+
+/* ── Pixel: Forfeit button ── */
+:root[data-theme='pixel'] .forfeit-btn {
+  background: #2a2a4a;
+  border: 3px solid #f04040;
+  color: #ff6060;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  text-shadow: 1px 1px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .forfeit-btn:hover {
+  background: #f04040;
+  color: #0a0a1a;
+  box-shadow: 3px 3px 0 #0a0a1a, 0 0 12px rgba(240,64,64,0.4);
+}
+
+/* ── Pixel: Player areas ── */
+:root[data-theme='pixel'] .opponent-area {
+  background: linear-gradient(180deg, #0a0a1a 0%, transparent 100%);
+}
+:root[data-theme='pixel'] .current-area {
+  background: linear-gradient(0deg, #0a0a1a 0%, transparent 100%);
+}
+
+/* Setup screen */
+:root[data-theme='pixel'] .setup-screen {
+  background: #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* ── Pixel: Transition screen ── */
+:root[data-theme='pixel'] .transition-screen {
+  background: #0a0a1a;
+}
+:root[data-theme='pixel'] .transition-card {
+  background: #1a1a2e;
+  border: 4px solid #f0d060;
+  box-shadow: 6px 6px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .gameover-card {
+  border: 4px solid #f0d060;
+  box-shadow: 6px 6px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .transition-player-name {
+  text-shadow: 3px 3px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .gameover-title {
+  color: #f0d060;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.2rem;
+  text-shadow: 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .ready-btn {
+  font-family: 'Press Start 2P', monospace;
+  background: #40e040;
+  color: #0a0a1a;
+  border: 3px solid #208020;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  font-size: 0.5rem;
+}
+:root[data-theme='pixel'] .ready-btn:hover {
+  background: #60ff60;
+}
+
+/* ── Pixel: Forfeit confirm ── */
+:root[data-theme='pixel'] .forfeit-confirm {
+  background: #1a1a2e;
+  border: 4px solid #f04040;
+  box-shadow: 6px 6px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .forfeit-confirm span {
+  color: #e8e8e8;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  line-height: 1.6;
+}
+:root[data-theme='pixel'] .forfeit-no {
+  background: #2a2a4a;
+  border: 3px solid #606080;
+  color: #e8e8e8;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+}
+:root[data-theme='pixel'] .forfeit-no:hover {
+  background: #3a3a5a;
+}
+:root[data-theme='pixel'] .forfeit-yes {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  background: #f04040;
+  color: #ffffff;
+  border: 3px solid #a02020;
+}
+
+/* ── Pixel: Game over screen ── */
+:root[data-theme='pixel'] .gameover-screen {
+  background: #0a0a1a;
+  font-family: 'Press Start 2P', monospace;
+}
+:root[data-theme='pixel'] .go-loser-avatar {
+  border: 4px solid #f04040;
+  background: #2a2a4a;
+  color: #808898;
+  box-shadow: 4px 4px 0 #0a0a1a;
+  animation: none;
+}
+:root[data-theme='pixel'] .go-loser-name {
+  color: #808898;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+}
+:root[data-theme='pixel'] .go-winner-avatar {
+  border: 4px solid #f0d060;
+  background: #2a2a4a;
+  color: #f0d060;
+  box-shadow: 0 0 0 4px rgba(240,208,96,0.3), 4px 4px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .go-winner-name {
+  color: #f0d060;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  text-shadow: 3px 3px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .go-winner-title {
+  color: #a0a8b8;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.3rem;
+}
+:root[data-theme='pixel'] .go-trophy {
+  filter: drop-shadow(0 0 12px rgba(240,208,96,0.8));
+}
+:root[data-theme='pixel'] .go-forfeit-note {
+  color: rgba(240,208,96,0.5);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.3rem;
+}
+:root[data-theme='pixel'] .go-play-again {
+  font-family: 'Press Start 2P', monospace;
+  background: #40e040;
+  color: #0a0a1a;
+  border: 3px solid #208020;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  font-size: 0.45rem;
+}
+:root[data-theme='pixel'] .go-play-again:hover {
+  background: #60ff60;
+}
+
+/* ── Pixel: Exhausted minions ── */
+:root[data-theme='pixel'] .board-minion .exhausted-overlay {
+  background: rgba(10,10,26,0.5);
+}
+
+/* ── Pixel: Deck counter ── */
+:root[data-theme='pixel'] .deck-counter {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  color: #c8d0e0;
+  text-shadow: 1px 1px 0 #0a0a1a;
+}
+:root[data-theme='pixel'] .deck-count {
+  font-family: 'Press Start 2P', monospace;
+  color: #ffe878;
+}
+
+/* ── Pixel: Game message ── */
+:root[data-theme='pixel'] .game-message {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  background: rgba(10,10,26,0.95);
+  border: 3px solid #f0d060;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  color: #e8e8e8;
+  line-height: 1.6;
+}
+
+/* ── Pixel: Cancel button ── */
+:root[data-theme='pixel'] .cancel-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  background: #f04040;
+  color: #ffffff;
+  border: 3px solid #a02020;
+  box-shadow: 3px 3px 0 #0a0a1a;
+  text-shadow: 1px 1px 0 #a02020;
+}
+
+/* ── Pixel: Scale toggle ── */
+:root[data-theme='pixel'] .scale-toggle-btn {
+  font-family: 'Press Start 2P', monospace;
+  background: #2a2a4a;
+  border: 2px solid #606080;
+  color: #a0a8b8;
+  box-shadow: 2px 2px 0 #0a0a1a;
+}
+
+/* ── Pixel: Ambience - Falling pixels ── */
+:root[data-theme='pixel'] .ambience-pixel {
+  position: absolute;
+  width: var(--sz, 4px);
+  height: var(--sz, 4px);
+  background: var(--clr, #f0d060);
+  left: var(--x);
+  top: -8px;
+  opacity: 0;
+  animation: pixel-fall var(--dur, 6s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes pixel-fall {
+  0%   { transform: translateY(0); opacity: 0; }
+  5%   { opacity: 0.6; }
+  85%  { opacity: 0.4; }
+  100% { transform: translateY(calc(100vh)); opacity: 0; }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────────── */

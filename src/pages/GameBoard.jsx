@@ -428,15 +428,17 @@ const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, is
   );
 });
 
-const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
+const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, isOpponent, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
+  const isExhausted = !canAttack && !isOpponent;
   return (
     <div
       data-minion-id={minion.id}
       className={`board-minion
         ${isSelected       ? 'selected-attacker' : ''}
         ${isValidTarget    ? 'valid-target'       : ''}
-        ${canAttack        ? 'can-attack'         : 'exhausted'}
+        ${canAttack        ? 'can-attack'         : ''}
+        ${isExhausted      ? 'exhausted'          : ''}
         ${minion.abilities?.includes('taunt') ? 'has-taunt' : ''}
         ${minion.hasDivineShield ? 'has-divine' : ''}
         ${minion.stealthed  ? 'is-stealthed'      : ''}
@@ -467,7 +469,7 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
         <span className={`stat-attack ${isBuffed ? 'stat-buffed' : ''}`}>⚔{minion.attack}</span>
         <span className={`stat-health ${minion.damaged ? 'damaged' : ''} ${isBuffed ? 'stat-buffed' : ''}`}>❤{minion.health}</span>
       </div>
-      {!canAttack && <div className="exhausted-overlay" />}
+      {isExhausted && <div className="exhausted-overlay" />}
     </div>
   );
 });
@@ -612,8 +614,27 @@ const RUNES = Array.from({ length: 14 }, (_, i) => ({
 }));
 
 
+const PIXEL_COLORS = ['#f0d060','#4090f0','#40e040','#f04040','#c060f0','#f09040'];
+const PIXELS = Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  x: `${2 + (i * 43 + 11) % 96}%`,
+  sz: `${3 + (i % 3) * 2}px`,
+  clr: PIXEL_COLORS[i % PIXEL_COLORS.length],
+  dur: `${4 + (i * 1.1) % 6}s`,
+  delay: `${(i * 0.5) % 5}s`,
+}));
+
 function BoardAmbience() {
   const { theme } = useTheme();
+  if (theme === 'pixel') return (
+    <div className="board-ambience">
+      {PIXELS.map(p => (
+        <div key={p.id} className="ambience-pixel" style={{
+          '--x': p.x, '--sz': p.sz, '--clr': p.clr, '--dur': p.dur, '--delay': p.delay,
+        }} />
+      ))}
+    </div>
+  );
   if (theme === 'arena') return (
     <div className="board-ambience">
       {EMBERS.map(e => (
@@ -1038,7 +1059,7 @@ export default function GameBoard() {
           {oppPlayer.board.map((minion, i) => (
             <BoardMinionCard key={minion.id} minion={minion} playerIdx={opp} boardIdx={i} isSelected={false}
               isValidTarget={(!!state.selectedMinion && validTargets.minions.includes(i)) || (!!state.pendingSpell && spellTargets.enemyMinions.includes(i)) || (!!state.pendingBattlecryTarget && state.pendingBattlecryTarget.type === 'silence')}
-              canAttack={false} onClick={handleSelectMinion} onInspect={setInspectedCard}
+              canAttack={false} isOpponent={true} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} />
           ))}
           {oppPlayer.board.length === 0 && <div className="empty-board-hint opp-hint">Opponent's side</div>}
@@ -1055,7 +1076,7 @@ export default function GameBoard() {
             <BoardMinionCard key={minion.id} minion={minion} playerIdx={cur} boardIdx={i}
               isSelected={state.selectedMinion?.boardIdx === i && state.selectedMinion?.playerIdx === cur}
               isValidTarget={!!state.pendingSpell && spellTargets.friendlyMinions.includes(i)}
-              canAttack={minion.canAttack} onClick={handleSelectMinion} onInspect={setInspectedCard}
+              canAttack={minion.canAttack} isOpponent={false} onClick={handleSelectMinion} onInspect={setInspectedCard}
               isLunging={shakingIds.has(minion.id)} isTakingHit={hitIds.has(minion.id)} isNewlyPlayed={newlyPlayed.has(minion.id)} isBuffed={buffedIds.has(minion.id)} />
           ))}
           {curPlayer.board.length === 0 && <div className="empty-board-hint">Play minions here</div>}

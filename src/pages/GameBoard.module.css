@@ -34,7 +34,7 @@
 .backBtn:hover { color: var(--text-primary); border-color: var(--accent-primary); }
 
 .turnBanner {
-  font-family: 'Cinzel', Georgia, serif;
+  font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
   color: var(--accent-primary);
@@ -78,7 +78,7 @@
   font-size: 2rem;
   color: var(--text-primary);
   margin: 0;
-  font-family: 'Cinzel', Georgia, serif;
+  font-family: var(--font-display);
 }
 
 .swapScreen p {

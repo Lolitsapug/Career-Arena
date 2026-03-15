@@ -7,6 +7,7 @@ export const THEME_OPTIONS = [
   { id: 'mono',  label: 'Mono' },
   { id: 'rune',  label: 'Rune' },
   { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'pixel', label: 'Pixel' },
 ]
 
 const ThemeContext = createContext(null)

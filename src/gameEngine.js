@@ -292,7 +292,17 @@ export function startTurn(state) {
   p.mana = { current: newMax, max: newMax };
 
   // Draw a card
-  s.players[pi] = drawCards(p, 1);
+  s.players[pi] = drawCards(s.players[pi], 1);
+
+  // Network Effect: draw 1 extra card each turn
+  if (s.players[pi].passive?.key === 'communication') {
+    s.players[pi] = drawCards(s.players[pi], 1);
+  }
+
+  // Creative Vision: mark that the first card this turn is free
+  if (s.players[pi].passive?.key === 'design') {
+    s.players[pi].firstCardPlayedThisTurn = true;
+  }
 
   // Enable attacks on all board minions (clear rushOnly + frozen at start of each new turn)
   s.players[pi].board = s.players[pi].board.map(m => ({
@@ -317,12 +327,20 @@ export function playCard(state, cardIndex) {
   const card = p.hand[cardIndex];
 
   if (!card) return { state: s, needsTarget: false };
-  if (p.mana.current < card.cost) return { state: s, needsTarget: false };
+
+  // Creative Vision: first card played this turn costs 0
+  let effectiveCost = card.cost;
+  if (p.passive?.key === 'design' && p.firstCardPlayedThisTurn) {
+    effectiveCost = 0;
+    s.players[pi].firstCardPlayedThisTurn = false;
+  }
+
+  if (p.mana.current < effectiveCost) return { state: s, needsTarget: false };
   if (card.type === 'MINION' && p.board.length >= 7) return { state: s, needsTarget: false };
 
   if (card.type === 'MINION') {
     // Deduct mana and remove from hand immediately for minions
-    s.players[pi].mana.current -= card.cost;
+    s.players[pi].mana.current -= effectiveCost;
     s.players[pi].hand.splice(cardIndex, 1);
     if (!s.players[pi].discard) s.players[pi].discard = [];
     s.players[pi].discard.push(card);
@@ -340,6 +358,16 @@ export function playCard(state, cardIndex) {
     };
     s.players[pi].board.push(minion);
 
+    // Persuasion: if opponent has this passive, new minion gets -1 ATK
+    const oppIdx = 1 - pi;
+    if (s.players[oppIdx].passive?.key === 'sales') {
+      const newMinionIdx = s.players[pi].board.length - 1;
+      s.players[pi].board[newMinionIdx] = {
+        ...s.players[pi].board[newMinionIdx],
+        attack: Math.max(0, s.players[pi].board[newMinionIdx].attack - 1),
+      };
+    }
+
     // Resolve battlecry (synchronously – ignore async spawn edge case)
     s = resolveBattlecry(s, pi, card);
     s.log = [`${p.hero.name} played ${card.name}`];
@@ -350,11 +378,11 @@ export function playCard(state, cardIndex) {
     );
     if (needsTarget) {
       // Don't remove from hand or deduct mana yet — wait for target confirmation
-      s.pendingSpell = { cardIndex, card };
+      s.pendingSpell = { cardIndex, card, effectiveCost };
       return { state: s, needsTarget: true };
     } else {
       // No target needed — commit immediately
-      s.players[pi].mana.current -= card.cost;
+      s.players[pi].mana.current -= effectiveCost;
       s.players[pi].hand.splice(cardIndex, 1);
       if (!s.players[pi].discard) s.players[pi].discard = [];
       s.players[pi].discard.push(card);
@@ -371,11 +399,11 @@ export function playCard(state, cardIndex) {
 export function resolveSpellTarget(state, targetType, targetIdx) {
   let s = deepClone(state);
   if (!s.pendingSpell) return s;
-  const { cardIndex, card } = s.pendingSpell;
+  const { cardIndex, card, effectiveCost } = s.pendingSpell;
   const pi = s.currentPlayer;
   s.pendingSpell = null;
   // Now commit: deduct mana and remove card from hand
-  s.players[pi].mana.current -= card.cost;
+  s.players[pi].mana.current -= (effectiveCost ?? card.cost);
   s.players[pi].hand.splice(cardIndex, 1);
   if (!s.players[pi].discard) s.players[pi].discard = [];
   s.players[pi].discard.push(card);

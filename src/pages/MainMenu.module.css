@@ -534,6 +534,31 @@
   flex-shrink: 0;
 }
 
+/* ── Passive widget (player slot) ── */
+.passiveWidget {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 4px;
+  background: rgba(var(--accent-rgb, 99,102,241), 0.1);
+  border: 1px solid rgba(var(--accent-rgb, 99,102,241), 0.25);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.passiveWidgetName {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+
+.passiveWidgetDesc {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
 /* ── Watermark ── */
 .watermark {
   position: fixed;

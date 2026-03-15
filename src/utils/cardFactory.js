@@ -47,9 +47,9 @@ function getRoleType(title = '') {
 function pickPassive(skills = []) {
   const skillStr = skills.join(' ').toLowerCase()
   for (const key of Object.keys(PASSIVE_MAP)) {
-    if (skillStr.includes(key)) return PASSIVE_MAP[key]
+    if (skillStr.includes(key)) return { key, ...PASSIVE_MAP[key] }
   }
-  return PASSIVE_MAP.default
+  return { key: 'default', ...PASSIVE_MAP.default }
 }
 
 const NEW_ABILITIES = [

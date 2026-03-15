@@ -80,7 +80,8 @@ function geminiCardToGameCard(card) {
   const description = card.abilityDescription || card.specialAbility?.description || '';
   // Always run inference — fills in abilities that were described in text but not listed (old format)
   const abilities = inferAbilitiesFromText(rawAbilities, description);
-  const health = Math.min(Math.max(Number(card.hp) || 2, 1), 10);
+  const rawHp = card.hp ?? card.health;
+  const health = Math.min(Math.max(Number(rawHp) ?? 1, 1), 10);
   return {
     id: card.id || `g${++_cardIdCtr}_${Math.random().toString(36).slice(2, 6)}`,
     name: card.name || 'Unknown',
@@ -99,6 +100,22 @@ function geminiCardToGameCard(card) {
   };
 }
 
+// Map known passive names to their keys (for Gemini-generated decks that lack a key field)
+const PASSIVE_NAME_TO_KEY = {
+  'Leadership Aura': 'leadership',
+  'Network Effect': 'communication',
+  'Resource Allocation': 'management',
+  'Optimization': 'engineering',
+  'Creative Vision': 'design',
+  'Persuasion': 'sales',
+  'Veteran Presence': 'default',
+}
+function resolvePassiveKey(passive) {
+  if (!passive) return null
+  const key = passive.key ?? PASSIVE_NAME_TO_KEY[passive.name] ?? 'default'
+  return { key, name: passive.name, description: passive.description }
+}
+
 // Build a player state from a saved deck (Gemini format) + profile metadata
 function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
   const profile = savedDeck.profileMeta || {
@@ -109,15 +126,45 @@ function buildPlayerFromSavedDeck(savedDeck, initialHandSize) {
     experience: 1,
     profilePictureUrl: null,
   };
-  const hero = generateHero(profile);
-  const cards = (savedDeck.cards || []).map(geminiCardToGameCard);
+  let hero = generateHero(profile);
+  const allCards = (savedDeck.cards || []).map(geminiCardToGameCard);
   // Shuffle
-  for (let i = cards.length - 1; i > 0; i--) {
+  for (let i = allCards.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [cards[i], cards[j]] = [cards[j], cards[i]];
+    [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
   }
-  const hand = cards.splice(0, initialHandSize);
-  return { profile, hero, mana: { current: 0, max: 0 }, hand, deck: cards, board: [], discard: [] };
+  let hand = allCards.splice(0, initialHandSize);
+  let deck = allCards;
+
+  const passive = resolvePassiveKey(savedDeck.passive);
+
+  // Apply init-time passive effects
+  if (passive?.key === 'leadership') {
+    // Leadership Aura: all cards gain +1 ATK
+    hand = hand.map(c => ({ ...c, attack: (c.attack || 0) + 1 }))
+    deck = deck.map(c => ({ ...c, attack: (c.attack || 0) + 1 }))
+  }
+  if (passive?.key === 'engineering') {
+    // Optimization: all cards cost 1 less (min 1)
+    hand = hand.map(c => ({ ...c, cost: Math.max(1, (c.cost || 1) - 1) }))
+    deck = deck.map(c => ({ ...c, cost: Math.max(1, (c.cost || 1) - 1) }))
+  }
+  if (passive?.key === 'default') {
+    // Veteran Presence: +5 hero HP
+    hero = { ...hero, health: hero.health + 5, maxHealth: (hero.maxHealth ?? 30) + 5 }
+  }
+  // Resource Allocation: start at 2/2 mana instead of 0/0
+  const initialMana = passive?.key === 'management'
+    ? { current: 2, max: 2 }
+    : { current: 0, max: 0 }
+
+  return {
+    profile, hero,
+    mana: initialMana,
+    hand, deck, board: [], discard: [],
+    passive,
+    firstCardPlayedThisTurn: false,
+  };
 }
 
 function buildInitialState(deck1, deck2, profile1, profile2) {
@@ -970,11 +1017,27 @@ export default function GameBoard() {
   return (
     <div className="game-board">
       <div className="board-side board-side--left">
-        <div className="player-name-label player-name-label--opponent">{oppPlayer.hero.name}</div>
+        <div className="player-name-group player-name-group--opponent">
+          <div className="player-name-label">{oppPlayer.hero.name}</div>
+          {oppPlayer.passive && (
+            <div className="player-passive-badge">
+              <span className="passive-badge-name">⚡ {oppPlayer.passive.name}</span>
+              <span className="passive-badge-desc">{oppPlayer.passive.description}</span>
+            </div>
+          )}
+        </div>
         <div className="sidebar-turn">
           <span className="sidebar-turn-label">TURN {state.turn}</span>
         </div>
-        <div className="player-name-label player-name-label--player">{curPlayer.hero.name}</div>
+        <div className="player-name-group player-name-group--player">
+          {curPlayer.passive && (
+            <div className="player-passive-badge">
+              <span className="passive-badge-name">⚡ {curPlayer.passive.name}</span>
+              <span className="passive-badge-desc">{curPlayer.passive.description}</span>
+            </div>
+          )}
+          <div className="player-name-label">{curPlayer.hero.name}</div>
+        </div>
       </div>
       {/* Forfeit button — top right */}
       <div className="forfeit-zone">
@@ -1002,7 +1065,7 @@ export default function GameBoard() {
         <BgParticles />
         <div className="hero-zone">
           <div className="hero-side-info hero-side-info--left">
-            <ManaBar mana={oppPlayer.mana} />
+<ManaBar mana={oppPlayer.mana} />
           </div>
           <div className="hero-zone-spacer" />
           <div className="hero-side-info hero-side-info--right">

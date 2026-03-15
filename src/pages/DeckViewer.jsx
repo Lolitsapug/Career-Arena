@@ -227,8 +227,20 @@ export default function DeckViewer() {
   )
 }
 
+function applyPassiveToCards(cards, passive) {
+  return cards.map(card => {
+    let c = { ...card }
+    if (passive?.key === 'leadership') c = { ...c, attack: (c.attack || 0) + 1 }
+    if (passive?.key === 'engineering') c = { ...c, cost: Math.max(1, (c.cost || 1) - 1) }
+    return c
+  })
+}
+
 function DeckPanel({ deck, onCardClick }) {
-  const { cards, passive, ownerName } = deck
+  const { passive, ownerName } = deck
+
+  // Apply the same passive adjustments used at game start so previewed stats match in-game stats
+  const cards = applyPassiveToCards(deck.cards, passive)
 
   const avgCost = (cards.reduce((s, c) => s + c.cost, 0) / cards.length).toFixed(1)
   const totalAtk = cards.reduce((s, c) => s + c.attack, 0)

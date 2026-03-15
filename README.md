@@ -1,6 +1,6 @@
 # Career Arena
 
-Basic React + Vite starter for your AI-generated LinkedIn deck game.
+React + Vite LinkedIn battle card game
 
 ## Getting started
 

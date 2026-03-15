@@ -364,13 +364,18 @@ const Hero = memo(function Hero({ hero, playerIdx, isOpponent, isValidTarget, is
 const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, isOpponent, onInspect }) {
   if (isOpponent) return <div className="hand-card hand-card--back" />;
   const abilities = (card.abilities || []).filter(a => ABILITY_INFO[a]);
+  const allAbs = card.abilities || [];
   // For old-format cards with no abilities array, show description as a generic row
   const legacyDesc = abilities.length === 0 && (card.description || card.specialAbility?.description);
   const legacyName = abilities.length === 0 && card.specialAbility?.name;
 
+  const hasTaunt = allAbs.includes('taunt');
+  const hasDivine = allAbs.includes('divine_shield');
+  const hasDeathrattle = allAbs.some(a => a.startsWith('deathrattle'));
+
   return (
     <div
-      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''} ${cantAfford ? 'cant-afford' : ''}`}
+      className={`hand-card ${canPlay ? 'can-play' : ''} ${card.type === 'SPELL' ? 'spell-card' : ''} ${cantAfford ? 'cant-afford' : ''} ${hasTaunt ? 'card-taunt' : ''} ${hasDivine ? 'card-divine' : ''} ${hasDeathrattle ? 'card-deathrattle' : ''}`}
       onClick={onClick}
       onContextMenu={e => { e.preventDefault(); onInspect(card); }}
     >
@@ -430,7 +435,9 @@ const HandCard = memo(function HandCard({ card, canPlay, cantAfford, onClick, is
 
 const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isValidTarget, canAttack, isOpponent, onClick, onInspect, isLunging, isTakingHit, isNewlyPlayed, isBuffed, playerIdx, boardIdx }) {
   const abilities = (minion.abilities || []).filter(a => ABILITY_INFO[a]);
+  const allAbs = minion.abilities || [];
   const isExhausted = !canAttack && !isOpponent;
+  const hasDeathrattle = allAbs.some(a => a.startsWith('deathrattle'));
   return (
     <div
       data-minion-id={minion.id}
@@ -441,6 +448,7 @@ const BoardMinionCard = memo(function BoardMinionCard({ minion, isSelected, isVa
         ${isExhausted      ? 'exhausted'          : ''}
         ${minion.abilities?.includes('taunt') ? 'has-taunt' : ''}
         ${minion.hasDivineShield ? 'has-divine' : ''}
+        ${hasDeathrattle   ? 'has-deathrattle'    : ''}
         ${minion.stealthed  ? 'is-stealthed'      : ''}
         ${minion.silenced   ? 'is-silenced'       : ''}
         ${isLunging        ? 'lunging'            : ''}
